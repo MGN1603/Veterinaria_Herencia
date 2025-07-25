@@ -1,75 +1,73 @@
 package Controladores;
 
-import Modelo.Veterinario;
+import DAOs.DaoVeterinario;
+import DTOs.VeterinarioDTO;
+import Excepciones.VeterinarioExistenteExcepcion;
+import Excepciones.VeterinarioNoEncontradoExcepcion;
 import java.util.ArrayList;
 import javax.swing.table.DefaultTableModel;
 
 public class ControladorVeterinario {
 
-    private final ArrayList<Veterinario> veterinarios;
+    private final DaoVeterinario daoVeterinario;
 
     public ControladorVeterinario() {
-        this.veterinarios = new ArrayList<>();
+        this.daoVeterinario = new DaoVeterinario();
     }
 
-    public ArrayList<Veterinario> getVeterinarios() {
-        return veterinarios;
+    public ArrayList<VeterinarioDTO> obtenerVeterinarios() {
+        return daoVeterinario.getVeterinarios();
     }
 
-    public boolean registrarVeterinario(Veterinario veterinario) {
-        if (veterinario != null && buscarVeterinario(veterinario.getDocumento()) == null) {
-            veterinarios.add(veterinario);
-            return true;
+    public boolean registrarVeterinario(VeterinarioDTO veterinario) throws VeterinarioExistenteExcepcion {
+        if (veterinario == null) {
+            throw new IllegalArgumentException("El veterinario no puede ser nulo.");
         }
-        return false;
-    }
 
-    public Veterinario buscarVeterinario(int idVeterinario) {
-        for (Veterinario v : veterinarios) {
-            if (v.getDocumento() == idVeterinario) {
-                return v;
-            }
+        if (daoVeterinario.buscarVeterinario(veterinario.getDocumento()) != null) {
+            throw new VeterinarioExistenteExcepcion("Ya existe un veterinario con ese documento.");
         }
-        return null;
+
+        return daoVeterinario.registrarVeterinario(veterinario);
     }
 
-    public boolean eliminarVeterinario(int idVeterinario) {
-        Veterinario vet = buscarVeterinario(idVeterinario);
-        if (vet != null) {
-            veterinarios.remove(vet);
-            return true;
+    public VeterinarioDTO buscarVeterinario(int documento) throws VeterinarioNoEncontradoExcepcion {
+        VeterinarioDTO vet = daoVeterinario.buscarVeterinario(documento);
+        if (vet == null) {
+            throw new VeterinarioNoEncontradoExcepcion("Veterinario no encontrado con documento: " + documento);
         }
-        return false;
+        return vet;
     }
 
-    public boolean estaDisponible(int idVeterinario) {
-        Veterinario vet = buscarVeterinario(idVeterinario);
-        return vet != null && vet.isDisponibilidad();
-    }
-
-    public boolean cambiarDisponibilidad(int idVeterinario, boolean nuevaDisponibilidad) {
-        Veterinario vet = buscarVeterinario(idVeterinario);
-        if (vet != null) {
-            vet.setDisponibilidad(nuevaDisponibilidad);
-            return true;
+    public boolean eliminarVeterinario(int documento) throws VeterinarioNoEncontradoExcepcion {
+        if (daoVeterinario.buscarVeterinario(documento) == null) {
+            throw new VeterinarioNoEncontradoExcepcion("No se puede eliminar: veterinario no encontrado.");
         }
-        return false;
+        return daoVeterinario.eliminarVeterinario(documento);
+    }
+
+    public boolean cambiarDisponibilidad(int documento, boolean disponible) throws VeterinarioNoEncontradoExcepcion {
+        if (daoVeterinario.buscarVeterinario(documento) == null) {
+            throw new VeterinarioNoEncontradoExcepcion("No se encontró el veterinario para cambiar disponibilidad.");
+        }
+        return daoVeterinario.cambiarDisponibilidad(documento, disponible);
     }
 
     public DefaultTableModel listarVeterinariosTabla() {
-        String[] columnas = {"ID", "Nombre","Telefono","Correo", "Especialidad", "Disponible"};
-        DefaultTableModel modelo = new DefaultTableModel(columnas, 0);
+        DefaultTableModel modelo = new DefaultTableModel();
+        modelo.setColumnIdentifiers(new String[]{
+            "Documento", "Nombre", "Teléfono", "Correo", "Especialidad", "Disponible"
+        });
 
-        for (Veterinario v : veterinarios) {
-            Object[] fila = {
+        for (VeterinarioDTO v : daoVeterinario.getVeterinarios()) {
+            modelo.addRow(new Object[]{
                 v.getDocumento(),
                 v.getNombre(),
                 v.getTelefono(),
                 v.getCorreo(),
                 v.getEspecialidad(),
                 v.isDisponibilidad() ? "Sí" : "No"
-            };
-            modelo.addRow(fila);
+            });
         }
 
         return modelo;

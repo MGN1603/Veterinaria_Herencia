@@ -2,28 +2,32 @@ package Ventanas;
 
 import Controladores.ControladorCita;
 import Controladores.ControladorVeterinario;
-import Modelo.Cita;
-import Modelo.Mascota;
-import Modelo.Veterinario;
+import DTOs.CitaDTO;
+import DTOs.MascotaDTO;
+import DTOs.VeterinarioDTO;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 
 public class agendarCita extends javax.swing.JDialog {
 
-    private JComboBox<Veterinario> comboBoxVeterinarios;
+    private JComboBox<VeterinarioDTO> comboBoxVeterinarios;
     private final ControladorVeterinario controladorVeterinario;
     private final ControladorCita controladorCita;
-    private final Mascota mascota;
+    private final MascotaDTO mascota;
 
     public agendarCita(java.awt.Frame parent, boolean modal, ControladorCita controladorCita,
-            ControladorVeterinario controladorVeterinario, Mascota mascota) {
+            ControladorVeterinario controladorVeterinario, MascotaDTO mascota) {
         super(parent, modal);
         initComponents();
         setLocationRelativeTo(null);
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         setTitle("Cita para la Mascota: " + mascota.getNombre());
         this.controladorCita = controladorCita;
         this.controladorVeterinario = controladorVeterinario;
@@ -97,7 +101,7 @@ public class agendarCita extends javax.swing.JDialog {
         lblVeterinario.setForeground(new java.awt.Color(254, 252, 251));
         lblVeterinario.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblVeterinario.setText("Veterinario:");
-        panelDatos.add(lblVeterinario, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 40, 90, -1));
+        panelDatos.add(lblVeterinario, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 40, 90, -1));
         panelDatos.add(txtHoraCita, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 130, 191, -1));
 
         txtAreaMotivo.setColumns(20);
@@ -166,31 +170,44 @@ public class agendarCita extends javax.swing.JDialog {
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
+        try {
+            LocalDate fecha = LocalDate.parse(txtFechaCita1.getText());
+            LocalTime hora = LocalTime.parse(txtHoraCita.getText());
+            LocalDateTime fechaHora = LocalDateTime.of(fecha, hora);
+            String descripcion = txtAreaMotivo.getText();
 
-        LocalDate fecha = LocalDate.parse(txtFechaCita1.getText());
-        LocalTime hora = LocalTime.parse(txtHoraCita.getText());
-        LocalDateTime fechaHora = LocalDateTime.of(fecha, hora);
-        String descripcion = txtAreaMotivo.getText();
+            VeterinarioDTO veterinario = (VeterinarioDTO) comboBoxVeterinarios.getSelectedItem();
+            int idCita = controladorCita.generarIdCita();
 
-        Veterinario veterinario = (Veterinario) comboBoxVeterinarios.getSelectedItem();
-        int idCita = controladorCita.generarIdCita();
+            CitaDTO citaDTO = new CitaDTO(
+                    idCita,
+                    fecha,
+                    descripcion,
+                    fechaHora,
+                    false,
+                    veterinario.getDocumento(),
+                    mascota.getIdMascota(),
+                    -1
+            );
 
-        Cita cita = new Cita(idCita, fechaHora, false, veterinario, fecha, mascota, descripcion);
+            if (controladorCita.registrarCita(citaDTO)) {
+                JOptionPane.showMessageDialog(this, "Cita registrada correctamente.");
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al registrar la cita.");
+            }
 
-        if (controladorCita.agregarCitaMascota(cita)) {
-            JOptionPane.showMessageDialog(this, "Cita registrada correctamente.");
-            this.dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al registrar la cita.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void crearComboBoxVeterinarios() {
         comboBoxVeterinarios = new javax.swing.JComboBox<>();
-        DefaultComboBoxModel<Veterinario> modelo = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<VeterinarioDTO> modelo = new DefaultComboBoxModel<>();
         comboBoxVeterinarios.setModel(modelo);
 
-        for (Veterinario vet : controladorVeterinario.getVeterinarios()) {
+        for (VeterinarioDTO vet : controladorVeterinario.obtenerVeterinarios()) {
             if (vet.isDisponibilidad()) {
                 modelo.addElement(vet);
             }

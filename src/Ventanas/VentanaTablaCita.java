@@ -3,7 +3,8 @@ package Ventanas;
 import Controladores.ControladorCita;
 import Controladores.ControladorConsulta;
 import Controladores.ControladorVeterinario;
-import Modelo.Cita;
+import DTOs.CitaDTO;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 public class VentanaTablaCita extends javax.swing.JDialog {
@@ -17,6 +18,9 @@ public class VentanaTablaCita extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(null);
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         this.controladorveterinario = controladorVeterinario;
         this.controladorConsulta = controladorConsulta;
         this.controladorCita = controladorCita;
@@ -24,8 +28,7 @@ public class VentanaTablaCita extends javax.swing.JDialog {
     }
 
     public void mostrarTablaCita() {
-        System.out.println("Citas registradas: " + controladorCita.getCitas().size());
-        tablaCitas.setModel(controladorCita.listarCitasTabla());
+        tablaCitas.setModel(controladorCita.listarCitas());
     }
 
     @SuppressWarnings("unchecked")
@@ -154,7 +157,7 @@ public class VentanaTablaCita extends javax.swing.JDialog {
     private void btnAgregarConsultaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarConsultaActionPerformed
         int filaSeleccionada = tablaCitas.getSelectedRow();
         if (filaSeleccionada >= 0) {
-            Cita cita = controladorCita.getCitas().get(filaSeleccionada);
+            CitaDTO cita = controladorCita.obtenerCitaDTO().get(filaSeleccionada);
             VentanaRegistroConsulta dialog = new VentanaRegistroConsulta(null, true, cita, controladorConsulta, controladorveterinario);
             dialog.setVisible(true);
             mostrarTablaCita();

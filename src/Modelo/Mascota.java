@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class Mascota {
 
     private String nombre;
-    private final int idMascota;
+    private int idMascota;
     private String especie;
     private String raza;
     private int edad;
@@ -13,18 +13,15 @@ public class Mascota {
     private ArrayList<EventoClinico> historial;
     private Propietario propietario;
 
-    public Mascota(String nombre, int idMascota, String especie, String raza, int edad, double peso) {
-        setNombre(nombre);
-        setEspecie(especie);
-        setRaza(raza);
-        setEdad(edad);
-        setPeso(peso);
+    public Mascota(String nombre, int idMascota, String especie, String raza, int edad, double peso, Propietario propietario) {
+        this.nombre = nombre;
         this.idMascota = idMascota;
+        this.especie = especie;
+        this.raza = raza;
+        this.edad = edad;
+        this.peso = peso;
+        this.propietario = propietario;
         this.historial = new ArrayList<>();
-    }
-
-    public int getIdMascota() {
-        return idMascota;
     }
 
     public String getNombre() {
@@ -32,9 +29,6 @@ public class Mascota {
     }
 
     public void setNombre(String nombre) {
-        if (nombre == null || nombre.isBlank()) {
-            throw new IllegalArgumentException("El nombre no puede ser nulo");
-        }
         this.nombre = nombre;
     }
 
@@ -43,9 +37,6 @@ public class Mascota {
     }
 
     public void setEspecie(String especie) {
-        if (especie == null || especie.isBlank()) {
-            throw new IllegalArgumentException("La especie no puede ser nula");
-        }
         this.especie = especie;
     }
 
@@ -54,9 +45,6 @@ public class Mascota {
     }
 
     public void setRaza(String raza) {
-        if (raza == null || raza.isBlank()) {
-            throw new IllegalArgumentException("La Raza no puede ser nula");
-        }
         this.raza = raza;
     }
 
@@ -65,9 +53,6 @@ public class Mascota {
     }
 
     public void setEdad(int edad) {
-        if (edad < 0) {
-            throw new IllegalArgumentException("La Edad no puede ser Negativo");
-        }
         this.edad = edad;
     }
 
@@ -76,21 +61,7 @@ public class Mascota {
     }
 
     public void setPeso(double peso) {
-        if (peso <= 0) {
-            throw new IllegalArgumentException("El peso no puede ser negativo ni cero");
-        }
         this.peso = peso;
-    }
-
-    public Propietario getPropietario() {
-        return propietario;
-    }
-
-    public void asignarPropietario(Propietario propietario) {
-        if (propietario == null) {
-            throw new IllegalArgumentException("El propietario no puede ser nulo");
-        }
-        this.propietario = propietario;
     }
 
     public ArrayList<EventoClinico> getHistorial() {
@@ -99,6 +70,14 @@ public class Mascota {
 
     public void setHistorial(ArrayList<EventoClinico> historial) {
         this.historial = historial;
+    }
+
+    public Propietario getPropietario() {
+        return propietario;
+    }
+
+    public void setPropietario(Propietario propietario) {
+        this.propietario = propietario;
     }
 
     public void agregarEvento(EventoClinico evento) {

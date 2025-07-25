@@ -1,5 +1,7 @@
 package Ventanas;
 
+import javax.swing.ImageIcon;
+
 public class VentanaBienvenida extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaBienvenida.class.getName());
@@ -8,6 +10,9 @@ public class VentanaBienvenida extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         setTitle("Bienvenidos Al sistema Gestion Veterinaria");
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
     }
 
     @SuppressWarnings("unchecked")
@@ -89,10 +94,10 @@ public class VentanaBienvenida extends javax.swing.JFrame {
         VentanaPrincipal irVentana = new VentanaPrincipal();
         irVentana.setVisible(true);
         this.setVisible(false);
+        
     }//GEN-LAST:event_btnIrGestionVeterinariaActionPerformed
 
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
@@ -108,8 +113,6 @@ public class VentanaBienvenida extends javax.swing.JFrame {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new VentanaBienvenida().setVisible(true));
     }
 

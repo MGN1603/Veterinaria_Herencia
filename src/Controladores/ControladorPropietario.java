@@ -1,69 +1,71 @@
 package Controladores;
 
-import Modelo.Mascota;
-import Modelo.Propietario;
-import java.util.ArrayList;
+import DAOs.DaoMascota;
+import DAOs.DaoPropietario;
+import DTOs.MascotaDTO;
+import DTOs.PropietarioDTO;
+import Excepciones.PropietarioExistenteExcepcion;
+import Excepciones.PropietarioNoEncontradoExcepcion;
 import javax.swing.table.DefaultTableModel;
+import java.util.ArrayList;
 
 public class ControladorPropietario {
 
-    private final ArrayList<Propietario> propietarios;
+    private final DaoPropietario dao;
+    private final DaoMascota daoMascota;
 
     public ControladorPropietario() {
-        this.propietarios = new ArrayList<>();
+        this.dao = new DaoPropietario();
+        this.daoMascota = new DaoMascota();
     }
 
-    public ArrayList<Propietario> getPropietarios() {
-        return propietarios;
-    }
-
-    public boolean guardarPropietario(Propietario propietario) {
-        if (propietario != null && buscarPropietario(propietario.getDocumento()) == null) {
-            propietarios.add(propietario);
-            return true;
+    public boolean registrarPropietario(PropietarioDTO propietario) throws PropietarioExistenteExcepcion {
+        if (propietario == null) {
+            throw new IllegalArgumentException("El propietario no puede ser null.");
         }
-        return false;
-    }
 
-    public void agregarMascotaAPropietario(Propietario propietario, Mascota mascota) {
-        if (propietario != null && mascota != null) {
-            propietario.getMascotas().add(mascota);
+        if (dao.buscarPropietario(propietario.getDocumento()) != null) {
+            throw new PropietarioExistenteExcepcion("Ya existe un propietario con ese documento.");
         }
+        return dao.guardarPropietario(propietario);
     }
 
-    public Propietario buscarPropietario(int documento) {
-        for (Propietario propietario : propietarios) {
-            if (propietario.getDocumento() == documento) {
-                return propietario;
-            }
+    public PropietarioDTO buscarPropietario(int documento) throws PropietarioNoEncontradoExcepcion {
+        PropietarioDTO encontrado = dao.buscarPropietario(documento);
+        if (encontrado == null) {
+            throw new PropietarioNoEncontradoExcepcion("Propietario no encontrado con documento: " + documento);
         }
-        return null;
+        return encontrado;
     }
 
-    public boolean actualizarDatos(Propietario propietario) {
-        Propietario existente = buscarPropietario(propietario.getDocumento());
-        if (existente != null) {
-            existente.setNombre(propietario.getNombre());
-            existente.setTelefono(propietario.getTelefono());
-            existente.setCorreo(propietario.getCorreo());
-            return true;
+    public boolean actualizarDatos(PropietarioDTO actualizado) throws PropietarioNoEncontradoExcepcion {
+        PropietarioDTO actual = dao.buscarPropietario(actualizado.getDocumento());
+        if (actual == null) {
+            throw new PropietarioNoEncontradoExcepcion("No se puede actualizar: propietario no encontrado.");
         }
-        return false;
+
+        return dao.actualizarDatos(actualizado);
     }
 
-    public boolean eliminarPropietario(int documento) {
-        Propietario propietario = buscarPropietario(documento);
-        if (propietario != null) {
-            propietarios.remove(propietario);
-            return true;
+    public boolean eliminarPropietario(int documento) throws PropietarioNoEncontradoExcepcion {
+        PropietarioDTO actual = dao.buscarPropietario(documento);
+        if (actual == null) {
+            throw new PropietarioNoEncontradoExcepcion("No se puede eliminar: propietario no encontrado.");
         }
-        return false;
+        boolean eliminado = dao.eliminarPropietario(documento);
+        if (eliminado) {
+            daoMascota.ponerMascotasEnAdopcionPorPropietario(documento);
+        }
+        return eliminado;
     }
 
-    public DefaultTableModel listaPropietarios() {
+    public DefaultTableModel obtenerTablaPropietarios() {
         DefaultTableModel modelo = new DefaultTableModel();
         modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Documento", "Teléfono", "Correo"});
-        for (Propietario p : propietarios) {
+
+        ArrayList<PropietarioDTO> lista = dao.getPropietarios();
+
+        for (PropietarioDTO p : lista) {
             modelo.addRow(new Object[]{
                 p.getDocumento(),
                 p.getNombre(),
@@ -72,16 +74,19 @@ public class ControladorPropietario {
                 p.getCorreo()
             });
         }
+
         return modelo;
     }
 
-    public DefaultTableModel listaPropietariosMascota(int documento) {
+    public DefaultTableModel obtenerTablaMascotasDePropietario(int documento) throws PropietarioNoEncontradoExcepcion {
+        buscarPropietario(documento);
         DefaultTableModel modelo = new DefaultTableModel();
         modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Especie", "Raza", "Edad", "Peso"});
 
-        Propietario propietario = buscarPropietario(documento);
-        if (propietario != null) {
-            for (Mascota m : propietario.getMascotas()) {
+        DaoMascota daoMascota = new DaoMascota();
+
+        for (MascotaDTO m : daoMascota.getListaMascotas()) {
+            if (m.getIdPropietario() == documento) {
                 modelo.addRow(new Object[]{
                     m.getIdMascota(),
                     m.getNombre(),

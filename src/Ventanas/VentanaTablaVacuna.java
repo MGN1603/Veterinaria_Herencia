@@ -1,25 +1,35 @@
 package Ventanas;
 
 import Controladores.ControladorVacuna;
-import Modelo.Mascota;
+import DTOs.MascotaDTO;
+import Excepciones.MascotaNoEncontradaExcepcion;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 public class VentanaTablaVacuna extends javax.swing.JDialog {
 
     private final ControladorVacuna controladorVacuna;
-    private final Mascota mascota;
+    private final MascotaDTO mascota;
 
-    public VentanaTablaVacuna(java.awt.Frame parent, boolean modal, Mascota mascota, ControladorVacuna controladorVacuna) {
+    public VentanaTablaVacuna(java.awt.Frame parent, boolean modal, MascotaDTO mascota, ControladorVacuna controladorVacuna) {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(null);
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         this.mascota = mascota;
         this.controladorVacuna = controladorVacuna;
-        setTitle("Vacunacion: " + mascota.getNombre());
+        setTitle("Vacunas de: " + mascota.getNombre());
         llenarTablaVacunas();
     }
 
     private void llenarTablaVacunas() {
-        tablaVacunasMascota.setModel(controladorVacuna.TablaVacunasPorMascota(mascota));
+        try {
+            tablaVacunasMascota.setModel(controladorVacuna.tablaVacunasPorMascota(mascota.getIdMascota()));
+        } catch (MascotaNoEncontradaExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     @SuppressWarnings("unchecked")

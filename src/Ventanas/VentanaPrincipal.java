@@ -6,10 +6,17 @@ import Controladores.ControladorMascota;
 import Controladores.ControladorPropietario;
 import Controladores.ControladorVacuna;
 import Controladores.ControladorVeterinario;
-import Modelo.Cita;
-import Modelo.Mascota;
-import Modelo.Propietario;
-import Modelo.Veterinario;
+import DTOs.CitaDTO;
+import DTOs.MascotaDTO;
+import DTOs.PropietarioDTO;
+import DTOs.VeterinarioDTO;
+import Excepciones.MascotaExistenteExcepcion;
+import Excepciones.MascotaNoEncontradaExcepcion;
+import Excepciones.PropietarioExistenteExcepcion;
+import Excepciones.PropietarioNoEncontradoExcepcion;
+import Excepciones.VeterinarioExistenteExcepcion;
+import Excepciones.VeterinarioNoEncontradoExcepcion;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 public class VentanaPrincipal extends javax.swing.JFrame {
@@ -20,18 +27,26 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private final ControladorVeterinario controladorVet;
     private final ControladorConsulta controladorConsulta;
     private final ControladorVacuna controladorVacuna;
+    private int idPropietarioActualMascota = 0;
 
     public VentanaPrincipal() {
         initComponents();
         this.setLocationRelativeTo(null);
         setTitle("Sistema Gestion Veterinaria");
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         controladorPropietario = new ControladorPropietario();
-        controladorMascota = new ControladorMascota(controladorPropietario);
-        controladorCita = new ControladorCita(controladorMascota);
+        controladorMascota = new ControladorMascota();
+        controladorCita = new ControladorCita();
         controladorVet = new ControladorVeterinario();
-        controladorConsulta = new ControladorConsulta(controladorCita);
+        controladorConsulta = new ControladorConsulta();
         controladorVacuna = new ControladorVacuna();
+        actualizarTablaPropietario();
+        actualizarTablaVet();
         cargarTablaMascotas();
+        listaCita();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -117,6 +132,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jSeparator4 = new javax.swing.JSeparator();
         jSeparator5 = new javax.swing.JSeparator();
         btnHistorial = new javax.swing.JButton();
+        btnAsignarAPropietarioMascota = new javax.swing.JButton();
         panelListaPropietario = new javax.swing.JPanel();
         panelFondoPropietario = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -147,8 +163,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         lblTitulo.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
         lblTitulo.setForeground(new java.awt.Color(254, 252, 251));
         lblTitulo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblTitulo.setText("Datos Propietario");
-        panelContendido.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(174, 6, 341, -1));
+        lblTitulo.setText("Registro Propietario");
+        panelContendido.add(lblTitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 10, 341, -1));
 
         lblNombre.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         lblNombre.setForeground(new java.awt.Color(255, 255, 255));
@@ -184,8 +200,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnRegistrarPropietarioActionPerformed(evt);
             }
         });
-        panelContendido.add(btnRegistrarPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 160, -1));
-        panelContendido.add(separador, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, 390, 10));
+        panelContendido.add(btnRegistrarPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 190, -1));
+        panelContendido.add(separador, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 260, 660, 10));
 
         btnActualizarDatosPropietario.setBackground(new java.awt.Color(10, 17, 40));
         btnActualizarDatosPropietario.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -197,7 +213,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnActualizarDatosPropietarioActionPerformed(evt);
             }
         });
-        panelContendido.add(btnActualizarDatosPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 330, 160, -1));
+        panelContendido.add(btnActualizarDatosPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 330, 190, -1));
 
         btnBuscarPropietario.setBackground(new java.awt.Color(10, 17, 40));
         btnBuscarPropietario.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -209,7 +225,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnBuscarPropietarioActionPerformed(evt);
             }
         });
-        panelContendido.add(btnBuscarPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 280, 160, -1));
+        panelContendido.add(btnBuscarPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 280, 180, -1));
 
         btnEliminarPropietario.setBackground(new java.awt.Color(10, 17, 40));
         btnEliminarPropietario.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -221,11 +237,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnEliminarPropietarioActionPerformed(evt);
             }
         });
-        panelContendido.add(btnEliminarPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 330, 160, -1));
+        panelContendido.add(btnEliminarPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 330, 180, -1));
         panelContendido.add(separador1, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 44, 664, 10));
 
         lblImagenPropietario.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/jugar-con-mascota.png"))); // NOI18N
-        panelContendido.add(lblImagenPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 70, 140, 180));
+        panelContendido.add(lblImagenPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 70, 140, 180));
 
         javax.swing.GroupLayout panelDatosLayout = new javax.swing.GroupLayout(panelDatos);
         panelDatos.setLayout(panelDatosLayout);
@@ -309,25 +325,25 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         panelRegistroMascota.add(lblDocPropietario, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 90, 110, -1));
 
         txtNombreMascota.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(txtNombreMascota, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 130, 157, 20));
+        panelRegistroMascota.add(txtNombreMascota, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 126, 157, -1));
 
         txtDocPro.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(txtDocPro, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 90, 157, 20));
+        panelRegistroMascota.add(txtDocPro, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 86, 157, -1));
 
         txtIdMascota.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(txtIdMascota, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 170, 157, 20));
+        panelRegistroMascota.add(txtIdMascota, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 166, 157, -1));
 
         txtPeso.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(txtPeso, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 350, 157, 20));
+        panelRegistroMascota.add(txtPeso, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 346, 157, -1));
 
         txtEspecie.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(txtEspecie, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 210, 157, 20));
+        panelRegistroMascota.add(txtEspecie, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 206, 157, -1));
 
         spinnerEdad.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(spinnerEdad, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 300, 170, 20));
+        panelRegistroMascota.add(spinnerEdad, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 296, 170, -1));
 
         txtRaza.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        panelRegistroMascota.add(txtRaza, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 250, 157, 20));
+        panelRegistroMascota.add(txtRaza, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 246, 157, -1));
 
         btnRegistrarMascotaDueno.setBackground(new java.awt.Color(10, 17, 40));
         btnRegistrarMascotaDueno.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -384,7 +400,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnRegistrarMascotasindueno.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         btnRegistrarMascotasindueno.setForeground(new java.awt.Color(254, 252, 251));
         btnRegistrarMascotasindueno.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/gatito.png"))); // NOI18N
-        btnRegistrarMascotasindueno.setText(" Adopcion");
+        btnRegistrarMascotasindueno.setText(" En Adopcion");
         btnRegistrarMascotasindueno.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRegistrarMascotasinduenoActionPerformed(evt);
@@ -445,7 +461,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         lblVeterinario.setForeground(new java.awt.Color(254, 252, 251));
         lblVeterinario.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblVeterinario.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/veterinario (1).png"))); // NOI18N
-        lblVeterinario.setText("Registrar Veterinario");
+        lblVeterinario.setText("Registro Veterinario");
 
         btnRegistrarVeterinario.setBackground(new java.awt.Color(10, 17, 40));
         btnRegistrarVeterinario.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -542,8 +558,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                                 .addGroup(panelFondoVeterinarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(panelFondoVeterinarioLayout.createSequentialGroup()
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(lblListaVeterinario, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addComponent(lblListaVeterinario, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelFondoVeterinarioLayout.createSequentialGroup()
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addGroup(panelFondoVeterinarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -651,7 +666,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnAgendarCitaActionPerformed(evt);
             }
         });
-        panelFondoMascota.add(btnAgendarCita, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 320, 172, -1));
+        panelFondoMascota.add(btnAgendarCita, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 310, 172, 40));
 
         btnIrVacunas.setBackground(new java.awt.Color(10, 17, 40));
         btnIrVacunas.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -663,18 +678,19 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnIrVacunasActionPerformed(evt);
             }
         });
-        panelFondoMascota.add(btnIrVacunas, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 320, 170, -1));
+        panelFondoMascota.add(btnIrVacunas, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 309, 170, 40));
 
         btnVerConsulta.setBackground(new java.awt.Color(10, 17, 40));
         btnVerConsulta.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         btnVerConsulta.setForeground(new java.awt.Color(254, 252, 251));
+        btnVerConsulta.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/historial-medico.png"))); // NOI18N
         btnVerConsulta.setText("Ver Consultas");
         btnVerConsulta.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnVerConsultaActionPerformed(evt);
             }
         });
-        panelFondoMascota.add(btnVerConsulta, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 360, 172, -1));
+        panelFondoMascota.add(btnVerConsulta, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 360, 172, 40));
 
         btnVerVacunas.setBackground(new java.awt.Color(10, 17, 40));
         btnVerVacunas.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
@@ -686,7 +702,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btnVerVacunasActionPerformed(evt);
             }
         });
-        panelFondoMascota.add(btnVerVacunas, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 360, 172, -1));
+        panelFondoMascota.add(btnVerVacunas, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 360, 172, 40));
 
         lblListaMascota.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
         lblListaMascota.setForeground(new java.awt.Color(254, 252, 251));
@@ -701,12 +717,19 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnHistorial.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         btnHistorial.setForeground(new java.awt.Color(254, 252, 251));
         btnHistorial.setText("Historial");
-        btnHistorial.addActionListener(new java.awt.event.ActionListener() {
+        panelFondoMascota.add(btnHistorial, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 309, 200, 40));
+
+        btnAsignarAPropietarioMascota.setBackground(new java.awt.Color(10, 17, 40));
+        btnAsignarAPropietarioMascota.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
+        btnAsignarAPropietarioMascota.setForeground(new java.awt.Color(254, 252, 251));
+        btnAsignarAPropietarioMascota.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/jugar-con-mascota (1).png"))); // NOI18N
+        btnAsignarAPropietarioMascota.setText("Asignar Propietario");
+        btnAsignarAPropietarioMascota.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnHistorialActionPerformed(evt);
+                btnAsignarAPropietarioMascotaActionPerformed(evt);
             }
         });
-        panelFondoMascota.add(btnHistorial, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 360, 180, -1));
+        panelFondoMascota.add(btnAsignarAPropietarioMascota, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 360, 200, 40));
 
         javax.swing.GroupLayout panelListaMascotaLayout = new javax.swing.GroupLayout(panelListaMascota);
         panelListaMascota.setLayout(panelListaMascotaLayout);
@@ -856,7 +879,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         lblListaCita.setFont(new java.awt.Font("Arial Black", 0, 24)); // NOI18N
         lblListaCita.setForeground(new java.awt.Color(254, 252, 251));
         lblListaCita.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblListaCita.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/lista-de-contactos.png"))); // NOI18N
+        lblListaCita.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/informe-medico (2).png"))); // NOI18N
         lblListaCita.setText("Lista Citas");
 
         javax.swing.GroupLayout panelFondoCitaLayout = new javax.swing.GroupLayout(panelFondoCita);
@@ -935,36 +958,52 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     //===== CRUD Veterinario ========
     private void btnBuscarVeterinarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarVeterinarioActionPerformed
-        String docVetStr = txtDocVet.getText().trim();
-        if (!esEnteroPositivo(docVetStr)) {
-            JOptionPane.showMessageDialog(this, "Documento inválido.", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        int documento = Integer.parseInt(docVetStr);
-        Veterinario v = controladorVet.buscarVeterinario(documento);
-        if (v != null) {
+        try {
+            String docVetStr = txtDocVet.getText().trim();
+
+            if (!esEnteroPositivo(docVetStr)) {
+                JOptionPane.showMessageDialog(this, "Documento inválido. Debe ser un número positivo.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int documento = Integer.parseInt(docVetStr);
+
+            // Buscar y mostrar el veterinario
+            VeterinarioDTO v = controladorVet.buscarVeterinario(documento);
             String datos = v.mostrarDatos();
             JOptionPane.showMessageDialog(this, datos, "Veterinario encontrado", JOptionPane.INFORMATION_MESSAGE);
             limpiarCamposVeterinario();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se encontró ningún veterinario con ese documento.", "Error", JOptionPane.WARNING_MESSAGE);
+
+        } catch (VeterinarioNoEncontradoExcepcion e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "No encontrado", JOptionPane.WARNING_MESSAGE);
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Documento inválido. Asegúrate de ingresar solo números.", "Error de formato", JOptionPane.ERROR_MESSAGE);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnBuscarVeterinarioActionPerformed
 
     private void btnEliminarVeterinarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarVeterinarioActionPerformed
         String docVetStr = txtDocVet.getText().trim();
+
         if (!esEnteroPositivo(docVetStr)) {
             JOptionPane.showMessageDialog(this, "Documento inválido.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int documento = Integer.parseInt(docVetStr);
-        boolean eliminado = controladorVet.eliminarVeterinario(documento);
-        if (eliminado) {
-            JOptionPane.showMessageDialog(this, "Veterinario eliminado correctamente.");
-            limpiarCamposVeterinario();
-            actualizarTablaVet();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo eliminar. El veterinario no existe.", "Error", JOptionPane.WARNING_MESSAGE);
+
+        try {
+            boolean eliminado = controladorVet.eliminarVeterinario(documento);
+            if (eliminado) {
+                JOptionPane.showMessageDialog(this, "Veterinario eliminado correctamente.");
+                limpiarCamposVeterinario();
+                actualizarTablaVet();
+            }
+        } catch (VeterinarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btnEliminarVeterinarioActionPerformed
 
@@ -973,32 +1012,38 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         String nombreVet = txtNombreVet.getText().trim();
         String especialidad = txtEspecialidadVet.getText().trim();
         boolean disponible = checkDisponible.isSelected();
-        String telefonoStr = txtTelefonoVet.getText();
-        String correo = txtCorreoVet.getText();
+        String telefonoStr = txtTelefonoVet.getText().trim();
+        String correo = txtCorreoVet.getText().trim();
 
         if (camposVacios(docVetStr, nombreVet, especialidad, telefonoStr, correo)) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!esEnteroPositivo(docVetStr)) {
             JOptionPane.showMessageDialog(this, "El documento debe ser un número entero positivo.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int documento = Integer.parseInt(docVetStr);
         int telefono = Integer.parseInt(telefonoStr);
+
         if (idUsadoEnSistema(documento)) {
             JOptionPane.showMessageDialog(this, "Ese documento/ID ya está registrado en el sistema como propietario, veterinario o mascota.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        Veterinario v = new Veterinario(especialidad, disponible, nombreVet, documento, telefono, correo);
-        boolean guardado = controladorVet.registrarVeterinario(v);
-        if (guardado) {
-            JOptionPane.showMessageDialog(this, "Veterinario registrado con éxito");
-            limpiarCamposVeterinario();
-            actualizarTablaVet();
-        } else {
-            JOptionPane.showMessageDialog(this, "El veterinario ya existe");
+        VeterinarioDTO v = new VeterinarioDTO(nombreVet, documento, telefono, correo, especialidad, disponible);
+
+        try {
+            boolean guardado = controladorVet.registrarVeterinario(v);
+            if (guardado) {
+                JOptionPane.showMessageDialog(this, "Veterinario registrado con éxito");
+                limpiarCamposVeterinario();
+                actualizarTablaVet();
+            }
+        } catch (VeterinarioExistenteExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btnRegistrarVeterinarioActionPerformed
 
@@ -1015,14 +1060,17 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!validarCamposNumericos(idMascotaStr, edadStr)) {
             JOptionPane.showMessageDialog(this, "ID y edad deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!esDecimalPositivo(pesoStr)) {
             JOptionPane.showMessageDialog(this, "Peso debe ser un número positivo.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int idMascota = Integer.parseInt(idMascotaStr);
         int edad = Integer.parseInt(edadStr);
         double peso = Double.parseDouble(pesoStr);
@@ -1032,89 +1080,125 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             return;
         }
 
-        Mascota nueva = new Mascota(nombre, idMascota, especie, raza, edad, peso);
-        boolean guardar = controladorMascota.guardarMascota(nueva);
-        if (guardar) {
-            JOptionPane.showMessageDialog(this, "Mascota registrada correctamente sin dueño.");
-            limpiarCamposMascota();
-            cargarTablaMascotas();
-        } else {
-            JOptionPane.showMessageDialog(this, "La mascota ya existe.");
+        MascotaDTO nueva = new MascotaDTO(nombre, idMascota, especie, raza, edad, peso, idPropietarioActualMascota);
+
+        try {
+            boolean guardada = controladorMascota.guardarMascota(nueva);
+            if (guardada) {
+                JOptionPane.showMessageDialog(this, "Mascota registrada correctamente sin dueño.");
+                limpiarCamposMascota();
+                cargarTablaMascotas();
+            }
+        } catch (MascotaExistenteExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al registrar mascota", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btnRegistrarMascotasinduenoActionPerformed
 
     private void btnEliminarMascotaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarMascotaActionPerformed
         String idMascotaStr = txtIdMascota.getText().trim();
+
         if (!esEnteroPositivo(idMascotaStr)) {
             JOptionPane.showMessageDialog(this, "ID inválido.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int idMascota = Integer.parseInt(idMascotaStr);
-        boolean eliminado = controladorMascota.eliminarMascota(idMascota);
-        if (eliminado) {
-            JOptionPane.showMessageDialog(this, "Mascota eliminada correctamente.");
-            limpiarCamposMascota();
-            cargarTablaMascotas();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo eliminar. La mascota no existe.", "Error", JOptionPane.WARNING_MESSAGE);
+
+        try {
+            boolean eliminado = controladorMascota.eliminarMascota(idMascota);
+            if (eliminado) {
+                JOptionPane.showMessageDialog(this, "Mascota eliminada correctamente.");
+                limpiarCamposMascota();
+                cargarTablaMascotas();
+            }
+        } catch (MascotaNoEncontradaExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al eliminar mascota", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btnEliminarMascotaActionPerformed
 
     private void btnActualizarDatosMascotaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnActualizarDatosMascotaActionPerformed
-        String nombre = txtNombreMascota.getText().trim();
-        String idMascotaStr = txtIdMascota.getText().trim();
-        String especie = txtEspecie.getText().trim();
-        String raza = txtRaza.getText().trim();
-        String edadStr = spinnerEdad.getValue().toString();
-        String pesoStr = txtPeso.getText().trim();
+        try {
+            String nombre = txtNombreMascota.getText().trim();
+            String idMascotaStr = txtIdMascota.getText().trim();
+            String especie = txtEspecie.getText().trim();
+            String raza = txtRaza.getText().trim();
+            String edadStr = spinnerEdad.getValue().toString();
+            String pesoStr = txtPeso.getText().trim();
 
-        if (camposVacios(nombre, idMascotaStr, especie, raza, edadStr, pesoStr)) {
-            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios para actualizar.", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (!validarCamposNumericos(idMascotaStr, edadStr)) {
-            JOptionPane.showMessageDialog(this, "ID y edad deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (!esDecimalPositivo(pesoStr)) {
-            JOptionPane.showMessageDialog(this, "Peso debe ser un número positivo.", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        int idMascota = Integer.parseInt(idMascotaStr);
-        int edad = Integer.parseInt(edadStr);
-        double peso = Double.parseDouble(pesoStr);
+            if (camposVacios(nombre, idMascotaStr, especie, raza, edadStr, pesoStr)) {
+                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios para actualizar.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
-        Mascota actualizar = new Mascota(nombre, idMascota, especie, raza, edad, peso);
-        boolean actualizado = controladorMascota.actualizarDatosMascota(actualizar);
-        if (actualizado) {
-            JOptionPane.showMessageDialog(this, "Mascota actualizada correctamente.");
-            limpiarCamposMascota();
-            cargarTablaMascotas();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo actualizar. La mascota no existe.");
+            if (!validarCamposNumericos(idMascotaStr, edadStr)) {
+                JOptionPane.showMessageDialog(this, "ID y edad deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (!esDecimalPositivo(pesoStr)) {
+                JOptionPane.showMessageDialog(this, "Peso debe ser un número positivo.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int idMascota = Integer.parseInt(idMascotaStr);
+            int edad = Integer.parseInt(edadStr);
+            double peso = Double.parseDouble(pesoStr);
+
+            // Buscar la mascota existente para obtener su propietario actual
+            MascotaDTO mascotaExistente = controladorMascota.buscarMascota(idMascota);
+            if (mascotaExistente == null) {
+                JOptionPane.showMessageDialog(this, "La mascota no existe para actualizar.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Crear DTO actualizado manteniendo el propietario actual
+            MascotaDTO dtoActualizado = new MascotaDTO(nombre, idMascota, especie, raza, edad, peso, mascotaExistente.getIdPropietario());
+
+            boolean actualizado = controladorMascota.actualizarMascota(dtoActualizado);
+
+            if (actualizado) {
+                JOptionPane.showMessageDialog(this, "Mascota actualizada correctamente.");
+                limpiarCamposMascota();
+                cargarTablaMascotas();
+            }
+
+        } catch (MascotaNoEncontradaExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al Actualizar", JOptionPane.WARNING_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Error en el formato de los números.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnActualizarDatosMascotaActionPerformed
 
     private void btnBuscarMascotaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarMascotaActionPerformed
-        String idMascotaStr = txtIdMascota.getText().trim();
-        if (!esEnteroPositivo(idMascotaStr)) {
-            JOptionPane.showMessageDialog(this, "ID inválido.", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        int idMascota = Integer.parseInt(idMascotaStr);
-        Mascota mascota = controladorMascota.buscarMascota(idMascota);
-        if (mascota != null) {
-            String datos = "Datos de la mascota:\n";
-            datos += "• Nombre: " + mascota.getNombre() + "\n";
-            datos += "• Especie: " + mascota.getEspecie() + "\n";
-            datos += "• Raza: " + mascota.getRaza() + "\n";
-            datos += "• Edad: " + mascota.getEdad() + " años\n";
-            datos += "• Peso: " + mascota.getPeso() + " kg\n";
-            datos += "Propietario: " + (mascota.getPropietario() != null ? mascota.getPropietario().getNombre() : "Sin dueño") + "\n";
-            JOptionPane.showMessageDialog(this, datos, "Mascota encontrada", JOptionPane.INFORMATION_MESSAGE);
-            limpiarCamposMascota();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se encontró ninguna mascota con ese ID.");
+        try {
+            String idMascotaStr = txtIdMascota.getText().trim();
+
+            if (!esEnteroPositivo(idMascotaStr)) {
+                JOptionPane.showMessageDialog(this, "ID inválido.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int idMascota = Integer.parseInt(idMascotaStr);
+            MascotaDTO mascotaDTO = controladorMascota.buscarMascota(idMascota);
+
+            if (mascotaDTO != null) {
+                String datos = "Datos de la mascota:\n";
+                datos += "• Nombre: " + mascotaDTO.getNombre() + "\n";
+                datos += "• Especie: " + mascotaDTO.getEspecie() + "\n";
+                datos += "• Raza: " + mascotaDTO.getRaza() + "\n";
+                datos += "• Edad: " + mascotaDTO.getEdad() + " años\n";
+                datos += "• Peso: " + mascotaDTO.getPeso() + " kg\n";
+                datos += "• Propietario: " + (mascotaDTO.getIdPropietario() != 0 ? mascotaDTO.getIdPropietario() : "Sin dueño") + "\n";
+
+                // Guardamos el propietario actual para que no se pierda al actualizar
+                idPropietarioActualMascota = mascotaDTO.getIdPropietario();
+
+                JOptionPane.showMessageDialog(this, datos, "Mascota encontrada", JOptionPane.INFORMATION_MESSAGE);
+                limpiarCamposMascota();
+            }
+
+        } catch (MascotaNoEncontradaExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al Buscar", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btnBuscarMascotaActionPerformed
 
@@ -1131,71 +1215,108 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!validarCamposNumericos(idMascotaStr, edadStr, documentoStr)) {
-            JOptionPane.showMessageDialog(this, "ID, edad y documento propietario deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "ID, edad y documento del propietario deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!esDecimalPositivo(pesoStr)) {
             JOptionPane.showMessageDialog(this, "Peso debe ser un número positivo.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int idMascota = Integer.parseInt(idMascotaStr);
         int edad = Integer.parseInt(edadStr);
         double peso = Double.parseDouble(pesoStr);
-        int documento = Integer.parseInt(documentoStr);
+        int idPropietario = Integer.parseInt(documentoStr);
 
-        if (idUsadoEnSistema(idMascota)) {
-            JOptionPane.showMessageDialog(this, "Ese documento/ID ya está registrado en el sistema como propietario, veterinario o mascota.", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        try {
+            MascotaDTO dto = new MascotaDTO(nombre, idMascota, especie, raza, edad, peso, idPropietario);
+            boolean guardado = controladorMascota.guardarMascotaPropietario(dto, idPropietario);
 
-        Mascota nueva = new Mascota(nombre, idMascota, especie, raza, edad, peso);
-        boolean guardar = controladorMascota.guardarMascotaConPropietario(nueva, documento);
-        if (guardar) {
-            JOptionPane.showMessageDialog(this, "Mascota registrada correctamente con dueño.");
-            limpiarCamposMascota();
-            cargarTablaMascotas();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se encontró el propietario o la mascota ya existe.");
+            if (guardado) {
+                JOptionPane.showMessageDialog(this, "Mascota registrada correctamente con dueño.");
+                limpiarCamposMascota();
+                cargarTablaMascotas();
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo guardar la mascota. Intenta de nuevo.", "Error", JOptionPane.WARNING_MESSAGE);
+            }
+
+        } catch (MascotaExistenteExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Mascota ya registrada", JOptionPane.WARNING_MESSAGE);
+
+        } catch (PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Propietario no encontrado", JOptionPane.WARNING_MESSAGE);
+
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error de datos", JOptionPane.WARNING_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnRegistrarMascotaDuenoActionPerformed
 
     //======= CRUD Propietario =======
     private void btnEliminarPropietarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarPropietarioActionPerformed
         String documentoStr = txtDoumento.getText().trim();
+
         if (!esEnteroPositivo(documentoStr)) {
             JOptionPane.showMessageDialog(this, "Documento inválido.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int documento = Integer.parseInt(documentoStr);
-        boolean eliminado = controladorPropietario.eliminarPropietario(documento);
-        if (eliminado) {
-            JOptionPane.showMessageDialog(this, "Propietario eliminado.");
-            actualizarTablaPropietario();
-            limpiarCamposPropietario();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo eliminar. El propietario no existe.", "Error", JOptionPane.WARNING_MESSAGE);
+
+        try {
+            boolean eliminado = controladorPropietario.eliminarPropietario(documento);
+
+            if (eliminado) {
+                JOptionPane.showMessageDialog(this, "Propietario eliminado. Las mascotas ahora están en adopción.");
+                actualizarTablaPropietario();
+                cargarTablaMascotas();
+                limpiarCamposPropietario();
+            }
+
+        } catch (PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Propietario no encontrado", JOptionPane.WARNING_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void actualizarTablaPropietario() {
-        tablaPropietario.setModel(controladorPropietario.listaPropietarios());
+        tablaPropietario.setModel(controladorPropietario.obtenerTablaPropietarios());
     }//GEN-LAST:event_btnEliminarPropietarioActionPerformed
 
     private void btnBuscarPropietarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarPropietarioActionPerformed
         String documentoStr = txtDoumento.getText().trim();
+
         if (!esEnteroPositivo(documentoStr)) {
             JOptionPane.showMessageDialog(this, "Documento inválido.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int documento = Integer.parseInt(documentoStr);
-        Propietario buscar = controladorPropietario.buscarPropietario(documento);
-        if (buscar != null) {
-            String datos = buscar.mostrarDatos();
-            JOptionPane.showMessageDialog(this, datos, "Datos Propietario", JOptionPane.INFORMATION_MESSAGE);
+
+        try {
+            PropietarioDTO p = controladorPropietario.buscarPropietario(documento);
+
+            String datos = "Datos del Propietario\n";
+            datos += "• Nombre: " + p.getNombre() + "\n";
+            datos += "• Documento: " + p.getDocumento() + "\n";
+            datos += "• Teléfono: " + p.getTelefono() + "\n";
+            datos += "• Correo: " + p.getCorreo();
+
+            JOptionPane.showMessageDialog(this, datos, "Propietario encontrado", JOptionPane.INFORMATION_MESSAGE);
             limpiarCamposPropietario();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se encontró ningún propietario con ese documento.", "Error", JOptionPane.WARNING_MESSAGE);
+
+        } catch (PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "No encontrado", JOptionPane.WARNING_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnBuscarPropietarioActionPerformed
 
@@ -1209,21 +1330,31 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios para actualizar.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!validarCamposNumericos(documentoStr, telefonoStr)) {
             JOptionPane.showMessageDialog(this, "Documento y teléfono deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int documento = Integer.parseInt(documentoStr);
         int telefono = Integer.parseInt(telefonoStr);
 
-        Propietario propietario = new Propietario(nombre, documento, telefono, correo);
-        boolean actualizado = controladorPropietario.actualizarDatos(propietario);
-        if (actualizado) {
-            JOptionPane.showMessageDialog(this, "Datos actualizados correctamente.");
-            actualizarTablaPropietario();
-            limpiarCamposPropietario();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo actualizar. El propietario no existe.");
+        PropietarioDTO actualizado = new PropietarioDTO(nombre, documento, telefono, correo);
+
+        try {
+            boolean actualizar = controladorPropietario.actualizarDatos(actualizado);
+
+            if (actualizar) {
+                JOptionPane.showMessageDialog(this, "✅ Datos actualizados correctamente.");
+                actualizarTablaPropietario();
+                limpiarCamposPropietario();
+            }
+
+        } catch (PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "No encontrado", JOptionPane.WARNING_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnActualizarDatosPropietarioActionPerformed
 
@@ -1237,10 +1368,12 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (!validarCamposNumericos(documentoStr, telefonoStr)) {
             JOptionPane.showMessageDialog(this, "Documento y teléfono deben ser números positivos.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         int documento = Integer.parseInt(documentoStr);
         int telefono = Integer.parseInt(telefonoStr);
 
@@ -1249,14 +1382,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             return;
         }
 
-        Propietario propietario = new Propietario(nombre, documento, telefono, correo);
-        boolean guardar = controladorPropietario.guardarPropietario(propietario);
-        if (guardar) {
-            JOptionPane.showMessageDialog(this, "Propietario guardado correctamente.");
-            actualizarTablaPropietario();
-            limpiarCamposPropietario();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se guardó el Propietario. Verifica que no esté repetido.");
+        PropietarioDTO propietario = new PropietarioDTO(nombre, documento, telefono, correo);
+        try {
+            boolean guardado = controladorPropietario.registrarPropietario(propietario);
+            if (guardado) {
+                JOptionPane.showMessageDialog(this, "Propietario guardado correctamente.");
+                actualizarTablaPropietario();
+                limpiarCamposPropietario();
+            }
+        } catch (PropietarioExistenteExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Datos inválidos: " + ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
         }
 
     }//GEN-LAST:event_btnRegistrarPropietarioActionPerformed
@@ -1266,16 +1403,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         int fila = tablaMascota.getSelectedRow();
         if (fila >= 0) {
             int idMascota = Integer.parseInt(tablaMascota.getValueAt(fila, 0).toString());
-            Mascota mascota = controladorMascota.buscarMascota(idMascota);
 
-            if (mascota != null) {
+            try {
+                MascotaDTO mascota = controladorMascota.buscarMascota(idMascota);
+
                 agendarCita dialog = new agendarCita(this, true, controladorCita, controladorVet, mascota);
-
                 dialog.setVisible(true);
                 listaCita();
-            } else {
-                JOptionPane.showMessageDialog(this, "No se encontró la mascota.");
+
+            } catch (MascotaNoEncontradaExcepcion e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+
         } else {
             JOptionPane.showMessageDialog(this, "Selecciona una mascota primero.");
         }
@@ -1286,14 +1425,17 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         if (fila >= 0) {
             int idMascota = Integer.parseInt(tablaMascota.getValueAt(fila, 0).toString());
-            Mascota mascota = controladorMascota.buscarMascota(idMascota);
 
-            if (mascota != null) {
+            try {
+                MascotaDTO mascota = controladorMascota.buscarMascota(idMascota);
+
                 VentanaRegistroVacuna dialog = new VentanaRegistroVacuna(null, true, mascota, controladorVacuna);
                 dialog.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "No se encontró la mascota.");
+
+            } catch (MascotaNoEncontradaExcepcion e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+
         } else {
             JOptionPane.showMessageDialog(this, "Selecciona una mascota para registrar vacuna.");
         }
@@ -1304,14 +1446,17 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         if (fila >= 0) {
             int idMascota = Integer.parseInt(tablaMascota.getValueAt(fila, 0).toString());
-            Mascota mascota = controladorMascota.buscarMascota(idMascota);
 
-            if (mascota != null) {
+            try {
+                MascotaDTO mascota = controladorMascota.buscarMascota(idMascota);
+
                 VentanaTablaVacuna dialog = new VentanaTablaVacuna(null, true, mascota, controladorVacuna);
                 dialog.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "No se encontró la mascota.");
+
+            } catch (MascotaNoEncontradaExcepcion e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+
         } else {
             JOptionPane.showMessageDialog(this, "Selecciona una mascota para ver sus vacunas.");
         }
@@ -1334,7 +1479,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private void btnAgregarConsultaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarConsultaActionPerformed
         int filaSeleccionada = tablaCita.getSelectedRow();
         if (filaSeleccionada >= 0) {
-            Cita cita = controladorCita.getCitas().get(filaSeleccionada);
+            CitaDTO cita = controladorCita.obtenerCitaDTO().get(filaSeleccionada);
             VentanaRegistroConsulta dialog = new VentanaRegistroConsulta(this, true, cita, controladorConsulta, controladorVet);
             dialog.setVisible(true);
         } else {
@@ -1347,36 +1492,144 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         if (fila >= 0) {
             int idMascota = Integer.parseInt(tablaMascota.getValueAt(fila, 0).toString());
-            Mascota mascota = controladorMascota.buscarMascota(idMascota);
 
-            if (mascota != null) {
+            try {
+                MascotaDTO mascota = controladorMascota.buscarMascota(idMascota);
+
                 VentanaTablaConsulta dialog = new VentanaTablaConsulta(null, true, mascota, controladorConsulta);
                 dialog.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "No se encontró la mascota.");
+
+            } catch (MascotaNoEncontradaExcepcion e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+
         } else {
             JOptionPane.showMessageDialog(this, "Selecciona una mascota para ver sus consultas.");
         }
     }//GEN-LAST:event_btnVerConsultaActionPerformed
 
-    private void btnHistorialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHistorialActionPerformed
-        int fila = tablaMascota.getSelectedRow();
 
-        if (fila >= 0) {
-            int idMascota = Integer.parseInt(tablaMascota.getValueAt(fila, 0).toString());
-            Mascota mascota = controladorMascota.buscarMascota(idMascota);
+    private void btnAsignarAPropietarioMascotaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAsignarAPropietarioMascotaActionPerformed
+        // TODO add your handling code here:
+        try {
+            // Verificar que hay una fila seleccionada en la tabla
+            int filaSeleccionada = tablaMascota.getSelectedRow();
 
-            if (mascota != null) {
-                String historial = mascota.historialClinico();
-                JOptionPane.showMessageDialog(this, historial, "Historial de la Mascota", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Mascota no encontrada.");
+            if (filaSeleccionada == -1) {
+                JOptionPane.showMessageDialog(this,
+                        "Debe seleccionar una mascota de la tabla primero.",
+                        "Selección requerida",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecciona una mascota de la tabla primero.");
+
+            // Obtener el ID de la mascota desde la tabla.
+            int idMascotaSeleccionada = (Integer) tablaMascota.getValueAt(filaSeleccionada, 0);
+            String nombreMascota = (String) tablaMascota.getValueAt(filaSeleccionada, 1);
+
+            // Verificar si la mascota ya tiene propietario
+            boolean tienePropietario = controladorMascota.mascotaTienePropietario(idMascotaSeleccionada);
+
+            if (tienePropietario) {
+                int opcion = JOptionPane.showConfirmDialog(this,
+                        "La mascota '" + nombreMascota + "' ya tiene un propietario.\n¿Desea cambiar el propietario?",
+                        "Mascota con propietario",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+
+                if (opcion != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
+            // Solicitar el ID del propietario
+            String idPropietarioStr = JOptionPane.showInputDialog(this,
+                    "Ingrese el ID del propietario para la mascota '" + nombreMascota + "':",
+                    "Asignar Propietario",
+                    JOptionPane.QUESTION_MESSAGE);
+
+            // Verificar si el usuario canceló
+            if (idPropietarioStr == null) {
+                return;
+            }
+
+            // Valida que no esté vacío
+            if (idPropietarioStr.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "El ID del propietario no puede estar vacío.",
+                        "Error de validación",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Valida que sea un número
+            int idPropietario;
+            try {
+                idPropietario = Integer.parseInt(idPropietarioStr.trim());
+
+                if (idPropietario <= 0) {
+                    JOptionPane.showMessageDialog(this,
+                            "El ID del propietario debe ser un número positivo.",
+                            "Error de validación",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "El ID del propietario debe ser un número válido.",
+                        "Error de formato",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Intentar asignar el propietario
+            boolean asignado = controladorMascota.asignarPropietarioAMascota(idMascotaSeleccionada, idPropietario);
+
+            if (asignado) {
+                JOptionPane.showMessageDialog(this,
+                        "Propietario asignado correctamente a la mascota '" + nombreMascota + "'.",
+                        "Éxito",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                // Actualiza la tabla
+                cargarTablaMascotas();
+
+                if (filaSeleccionada < tablaMascota.getRowCount()) {
+                    tablaMascota.setRowSelectionInterval(filaSeleccionada, filaSeleccionada);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "No se pudo asignar el propietario. Intente nuevamente.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (MascotaNoEncontradaExcepcion ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error: " + ex.getMessage(),
+                    "Mascota no encontrada",
+                    JOptionPane.ERROR_MESSAGE);
+
+        } catch (PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error: " + ex.getMessage(),
+                    "Propietario no encontrado",
+                    JOptionPane.ERROR_MESSAGE);
+
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error de validación: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.WARNING_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error inesperado: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
-    }//GEN-LAST:event_btnHistorialActionPerformed
+    }//GEN-LAST:event_btnAsignarAPropietarioMascotaActionPerformed
 
     private void cargarTablaMascotas() {
         tablaMascota.setModel(controladorMascota.listarMascotasTabla());
@@ -1430,13 +1683,31 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
 
     private boolean idUsadoEnSistema(int id) {
-        if (controladorPropietario.buscarPropietario(id) != null) {
-            return true;
+        try {
+            if (controladorPropietario.buscarPropietario(id) != null) {
+                return true;
+            }
+        } catch (PropietarioNoEncontradoExcepcion e) {
+            // No pasa nada, el ID no pertenece a un propietario
         }
-        if (controladorVet.buscarVeterinario(id) != null) {
-            return true;
+
+        try {
+            if (controladorVet.buscarVeterinario(id) != null) {
+                return true;
+            }
+        } catch (VeterinarioNoEncontradoExcepcion e) {
+            // No pasa nada, el ID no pertenece a un veterinario
         }
-        return controladorMascota.buscarMascota(id) != null;
+
+        try {
+            if (controladorMascota.buscarMascota(id) != null) {
+                return true;
+            }
+        } catch (MascotaNoEncontradaExcepcion e) {
+            // No pasa nada, el ID no pertenece a una mascota
+        }
+
+        return false;
     }
 
     // ========================= MÉTODOS AUXILIARES DE LIMPIEZA =========================
@@ -1469,7 +1740,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
 
     private void listaCita() {
-        tablaCita.setModel(controladorCita.listarCitasTabla());
+        tablaCita.setModel(controladorCita.listarCitas());
     }
 
 
@@ -1480,6 +1751,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton btnActualizarDatosPropietario;
     private javax.swing.JButton btnAgendarCita;
     private javax.swing.JButton btnAgregarConsulta;
+    private javax.swing.JButton btnAsignarAPropietarioMascota;
     private javax.swing.JButton btnBuscarMascota;
     private javax.swing.JButton btnBuscarPropietario;
     private javax.swing.JButton btnBuscarVeterinario;

@@ -1,23 +1,29 @@
 package Ventanas;
 
 import Controladores.ControladorVacuna;
-import Modelo.Mascota;
-import Modelo.Vacuna;
+import DTOs.MascotaDTO;
+import DTOs.VacunaDTO;
 import java.time.LocalDate;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 public class VentanaRegistroVacuna extends javax.swing.JDialog {
 
     private final ControladorVacuna controladorVacuna;
-    private final Mascota mascota;
+    private final MascotaDTO mascota;
 
-    public VentanaRegistroVacuna(java.awt.Frame parent, boolean modal, Mascota mascota, ControladorVacuna controladorVacuna) {
+    public VentanaRegistroVacuna(java.awt.Frame parent, boolean modal, MascotaDTO mascota, ControladorVacuna controladorVacuna) {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(null);
         this.mascota = mascota;
         this.controladorVacuna = controladorVacuna;
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         setTitle("Registro de vacuna para: " + mascota.getNombre());
+        System.out.println("ID mascota recibido: " + mascota.getIdMascota());
+
     }
 
     @SuppressWarnings("unchecked")
@@ -146,24 +152,53 @@ public class VentanaRegistroVacuna extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRegistrarVacunaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarVacunaActionPerformed
-        int id = controladorVacuna.generarIdVacunas();
-        String tipoVacuna = txtTipo.getText().trim();
-        String lote = txtLote.getText().trim();
-        LocalDate fechaAplicacion = LocalDate.now();
-        String fechaProxima = txtFechaProx.getText().trim();
-        if (tipoVacuna.isEmpty() || lote.isEmpty() || fechaProxima.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Completa todos los campos.");
-            return;
-        }
-        Vacuna vacuna = new Vacuna(id, fechaAplicacion, mascota, fechaProxima, tipoVacuna, lote, fechaProxima);
-        boolean registrada = controladorVacuna.registrarVacuna(vacuna);
+        try {
+            int id = controladorVacuna.generarIdVacuna();
+            String tipoVacuna = txtTipo.getText().trim();
+            String lote = txtLote.getText().trim();
+            String descripcion = "Aplicacion de vacuna: " + tipoVacuna;
+            String fechaProximaStr = txtFechaProx.getText().trim();
 
-        if (registrada) {
-            JOptionPane.showMessageDialog(this, "Vacuna registrada con éxito");
-            cargarTablaVacunas();
-            this.dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al registrar la vacuna");
+            if (tipoVacuna.isEmpty() || lote.isEmpty() || descripcion.isEmpty() || fechaProximaStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Completa todos los campos.", "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Parsear la fecha de próxima aplicación
+            LocalDate fechaProx;
+            try {
+                fechaProx = LocalDate.parse(fechaProximaStr); // Asegúrate que esté en formato "yyyy-MM-dd"
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Formato de fecha inválido. Usa yyyy-MM-dd.", "Error de fecha", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            LocalDate fechaAplicacion = LocalDate.now();
+
+            // Crear DTO
+            VacunaDTO vacunaDTO = new VacunaDTO(
+                    id,
+                    fechaAplicacion,
+                    mascota.getIdMascota(), // Esta variable "mascota" debe venir por constructor o setter
+                    descripcion,
+                    tipoVacuna,
+                    lote,
+                    fechaProx
+            );
+
+            // Registrar
+            boolean registrada = controladorVacuna.registrarVacuna(vacunaDTO);
+
+            if (registrada) {
+                JOptionPane.showMessageDialog(this, "Vacuna registrada correctamente.");
+                this.dispose(); // Cierra la ventana actual
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo registrar la vacuna.");
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error inesperado", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
 
     }//GEN-LAST:event_btnRegistrarVacunaActionPerformed

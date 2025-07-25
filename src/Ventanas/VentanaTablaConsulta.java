@@ -1,17 +1,23 @@
 package Ventanas;
 
 import Controladores.ControladorConsulta;
-import Modelo.Mascota;
+import DTOs.MascotaDTO;
+import Excepciones.MascotaNoEncontradaExcepcion;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 public class VentanaTablaConsulta extends javax.swing.JDialog {
 
     private final ControladorConsulta controladorConsulta;
-    private final Mascota mascota;
+    private final MascotaDTO mascota;
 
-    public VentanaTablaConsulta(java.awt.Frame parent, boolean modal, Mascota mascota, ControladorConsulta controladorConsulta) {
+    public VentanaTablaConsulta(java.awt.Frame parent, boolean modal, MascotaDTO mascota, ControladorConsulta controladorConsulta) {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(null);
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         this.mascota = mascota;
         this.controladorConsulta = controladorConsulta;
         setTitle("Consultas de: " + mascota.getNombre());
@@ -19,7 +25,11 @@ public class VentanaTablaConsulta extends javax.swing.JDialog {
     }
 
     private void mostrarTablaConsulta() {
-        tablaConsultaMascota.setModel(controladorConsulta.TablaConsultasPorMascota(mascota));
+        try {
+            tablaConsultaMascota.setModel(controladorConsulta.tablaConsultasPorMascota(mascota.getIdMascota()));
+        } catch (MascotaNoEncontradaExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     @SuppressWarnings("unchecked")

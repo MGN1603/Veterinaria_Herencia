@@ -14,7 +14,7 @@ public class Vacuna extends EventoClinico {
         this.lote = lote;
         this.fechaProx = fechaProx;
     }
-
+        
     public String getTipoVacuna() {
         return tipoVacuna;
     }

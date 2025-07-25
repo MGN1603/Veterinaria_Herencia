@@ -1,90 +1,120 @@
 package Controladores;
 
-import Modelo.Consulta;
-import Modelo.Mascota;
+import DAOs.DaoConsulta;
+import DAOs.DaoCita;
+import DAOs.DaoMascota;
+import DTOs.ConsultaDTO;
+import DTOs.CitaDTO;
+import DTOs.MascotaDTO;
+import Excepciones.CitaNoEncontradaExcepcion;
+import Excepciones.CitaYaAtendidaExcepcion;
+import Excepciones.ConsultaNoEncontradaExcepcion;
+import Excepciones.ConsultaYaExistenteExcepcion;
+import Excepciones.MascotaNoEncontradaExcepcion;
+
 import java.util.ArrayList;
 import javax.swing.table.DefaultTableModel;
 
 public class ControladorConsulta {
 
-    private final ArrayList<Consulta> consultas;
-    private final ControladorCita controladorCita;
+    private final DaoConsulta daoConsulta;
+    private final DaoCita daoCita;
+    private final DaoMascota daoMascota;
 
-    public ControladorConsulta(ControladorCita controladorCita) {
-        this.consultas = new ArrayList<>();
-        this.controladorCita = controladorCita;
+    public ControladorConsulta() {
+        this.daoConsulta = new DaoConsulta();
+        this.daoCita = new DaoCita();
+        this.daoMascota = new DaoMascota();
     }
 
-    public ArrayList<Consulta> getConsultas() {
-        return consultas;
-    }
+    // MÉTODO PRINCIPAL - registrar consulta con validaciones completas
+    public boolean registrarConsulta(ConsultaDTO consulta)
+            throws CitaNoEncontradaExcepcion, CitaYaAtendidaExcepcion,
+            ConsultaYaExistenteExcepcion, MascotaNoEncontradaExcepcion {
 
-    public boolean registrarConsulta(Consulta consulta) {
-        if (consulta != null && consulta.getMascota() != null && consulta.getCita() != null && consulta.getVeterinario() != null) {
-            if (!consultas.contains(consulta)) {
-                consultas.add(consulta);
-                consulta.getMascota().getHistorial().add(consulta);
-                consulta.getCita().setConsulta(consulta);
-                return true;
-            }
+        if (consulta == null) {
+            throw new IllegalArgumentException("La consulta no puede ser null.");
         }
-        return false;
-    }
 
-    public Consulta buscarConsulta(int idConsulta) {
-        for (Consulta consulta : consultas) {
-            if (consulta.getId() == idConsulta) {
-                return consulta;
-            }
+        // 1. Verificar que la cita existe
+        CitaDTO cita = daoCita.buscarCitaPorId(consulta.getIdCita());
+        if (cita == null) {
+            throw new CitaNoEncontradaExcepcion("No se encontró la cita con ID: " + consulta.getIdCita());
         }
-        return null;
-    }
 
-    public boolean eliminarConsulta(int idConsulta) {
-        Consulta consulta = buscarConsulta(idConsulta);
-        if (consulta != null) {
-            consultas.remove(consulta);
+        // 2. Verificar que la cita no esté ya atendida
+        if (cita.isAtendida()) {
+            throw new CitaYaAtendidaExcepcion("La cita con ID " + consulta.getIdCita() + " ya fue atendida.");
+        }
+
+        // 3. Verificar que no exista ya una consulta para esta cita
+        if (daoConsulta.existeConsultaParaCita(consulta.getIdCita())) {
+            throw new ConsultaYaExistenteExcepcion("Ya existe una consulta para la cita con ID: " + consulta.getIdCita());
+        }
+
+        // 4. Verificar que la mascota existe
+        MascotaDTO mascota = daoMascota.buscarMascota(consulta.getIdMascota());
+        if (mascota == null) {  
+            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + consulta.getIdMascota());
+        }
+
+        // 5. Registrar la consulta
+        boolean consultaRegistrada = daoConsulta.registrarConsulta(consulta);
+
+        if (consultaRegistrada) {
+            // 6. Actualizar la cita para marcarla como atendida
+            boolean citaActualizada = daoCita.actualizarConsulta(consulta.getIdCita(), consulta.getIdConsulta());
+
+            if (!citaActualizada) {
+                // Si falla la actualización de la cita, habría que hacer rollback
+                // pero como usas serialización, esto es complicado
+                System.err.println("Advertencia: Consulta registrada pero no se pudo actualizar la cita");
+            }
+
             return true;
         }
+
         return false;
     }
 
-    public ArrayList<Consulta> obtenerConsultasPorMascota(Mascota mascota) {
-        ArrayList<Consulta> resultado = new ArrayList<>();
-        for (Consulta consulta : consultas) {
-            if (consulta.getMascota() != null && consulta.getMascota().equals(mascota)) {
-                resultado.add(consulta);
-            }
+    public ConsultaDTO buscarConsulta(int idConsulta) throws ConsultaNoEncontradaExcepcion {
+        ConsultaDTO consulta = daoConsulta.buscarConsulta(idConsulta);
+        if (consulta == null) {
+            throw new ConsultaNoEncontradaExcepcion("Consulta no encontrada con ID: " + idConsulta);
         }
-        return resultado;
+        return consulta;
     }
 
-    public DefaultTableModel TablaConsultasPorMascota(Mascota mascota) {
+    public ArrayList<ConsultaDTO> obtenerConsultasPorMascota(int idMascota) throws MascotaNoEncontradaExcepcion {
+        MascotaDTO mascota = daoMascota.buscarMascota(idMascota);
+        if (mascota == null) {
+            throw new MascotaNoEncontradaExcepcion("La mascota con ID " + idMascota + " no existe.");
+        }
+        return daoConsulta.obtenerConsultasPorMascota(idMascota);
+    }
+
+    public DefaultTableModel tablaConsultasPorMascota(int idMascota) throws MascotaNoEncontradaExcepcion {
         String[] columnas = {
-            "ID", "Fecha", "Mascota", "Veterinario",
-            "Diagnóstico", "Tratamiento", "Medicamentos", "Descripción"
+            "ID", "Fecha", "Diagnóstico", "Tratamiento", "Medicamentos", "Descripción"
         };
 
         DefaultTableModel modelo = new DefaultTableModel(columnas, 0);
 
-        for (Consulta consulta : obtenerConsultasPorMascota(mascota)) {
-            Object[] fila = {
-                consulta.getId(),
-                consulta.getFecha(),
-                consulta.getMascota().getNombre(),
-                (consulta.getVeterinario() != null) ? consulta.getVeterinario().getNombre() : "N/A",
-                consulta.getDiagnostico(),
-                consulta.getTratamiento(),
-                consulta.getMedicamentos(),
-                consulta.getDescripcion()
-            };
-            modelo.addRow(fila);
+        for (ConsultaDTO c : obtenerConsultasPorMascota(idMascota)) {
+            modelo.addRow(new Object[]{
+                c.getIdConsulta(),
+                c.getFecha(),
+                c.getDiagnostico(),
+                c.getTratamiento(),
+                c.getMedicamentos(),
+                c.getDescripcion()
+            });
         }
 
         return modelo;
     }
 
     public int generarIdConsulta() {
-        return consultas.size() + 1;
+        return daoConsulta.getConsultas().size() + 1;
     }
 }

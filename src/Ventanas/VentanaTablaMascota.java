@@ -1,6 +1,9 @@
 package Ventanas;
 
 import Controladores.ControladorPropietario;
+import Excepciones.PropietarioNoEncontradoExcepcion;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 public class VentanaTablaMascota extends javax.swing.JDialog {
 
@@ -10,12 +13,20 @@ public class VentanaTablaMascota extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(null);
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         this.controladorPropietario = controladorPropietario;
 
     }
 
     public void cargarMascota(int documento) {
-        TablaMascotaPropietario.setModel(controladorPropietario.listaPropietariosMascota(documento));
+        try {
+            TablaMascotaPropietario.setModel(controladorPropietario.obtenerTablaMascotasDePropietario(documento));
+
+        } catch (PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     @SuppressWarnings("unchecked")

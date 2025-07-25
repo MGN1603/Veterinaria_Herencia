@@ -2,26 +2,29 @@ package Ventanas;
 
 import Controladores.ControladorConsulta;
 import Controladores.ControladorVeterinario;
-import Modelo.Cita;
-import Modelo.Consulta;
-import Modelo.Veterinario;
+import DTOs.CitaDTO;
+import DTOs.ConsultaDTO;
+import java.time.LocalDate;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 public class VentanaRegistroConsulta extends javax.swing.JDialog {
-
-    private final Cita cita;
-    private final ControladorVeterinario controladorVeterinario;
+    
+    private final CitaDTO cita;
     private final ControladorConsulta controladorConsulta;
-
-    public VentanaRegistroConsulta(java.awt.Frame parent, boolean modal, Cita cita, ControladorConsulta controladorConsulta, ControladorVeterinario controladorVet) {
+    
+    public VentanaRegistroConsulta(java.awt.Frame parent, boolean modal, CitaDTO cita, ControladorConsulta controladorConsulta, ControladorVeterinario controladorVet) {
         super(parent, modal);
         initComponents();
         setLocationRelativeTo(null);
+        setTitle("Cita de la Mascota con ID: " + cita.getIdMascota());
+        ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
+        setIconImage(icono.getImage());
+        setVisible(true);
         this.cita = cita;
         this.controladorConsulta = controladorConsulta;
-        this.controladorVeterinario = controladorVet;
     }
-
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -166,33 +169,50 @@ public class VentanaRegistroConsulta extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-
-        int id = controladorConsulta.generarIdConsulta();
         String diagnostico = txtDiagnostico.getText().trim();
-        String tratamiento = txtAreaTratamiento.getText().trim();
-        String medicamento = txtMedicamento.getText().trim();
-
-        if (diagnostico.isEmpty() || tratamiento.isEmpty() || medicamento.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Completa todos los campos.");
+        String tratamiento = txtAreaTratamiento.getText();
+        String medicamentos = txtMedicamento.getText().trim();
+        String descripcion = txtDiagnostico.getText().trim();
+        
+        if (diagnostico.isEmpty() || tratamiento.isEmpty() || medicamentos.isEmpty() || descripcion.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        int idConsulta = controladorConsulta.generarIdConsulta();
+        LocalDate fecha = cita.getFecha();
+        int idVeterinario = cita.getIdVeterinario();
+        int idCita = cita.getIdCita();
+        int idMascota = cita.getIdMascota();
+        
+        ConsultaDTO consultaDTO = new ConsultaDTO(
+                idConsulta,
+                fecha,
+                diagnostico,
+                tratamiento,
+                medicamentos,
+                descripcion,
+                idVeterinario,
+                idCita,
+                idMascota
+        );
+        
+        try {
+            boolean registrada = controladorConsulta.registrarConsulta(consultaDTO);
+            if (registrada) {
+                JOptionPane.showMessageDialog(this, "Consulta registrada con éxito.");
 
-        Veterinario veterinario = cita.getVeterinario();
-        if (veterinario == null) {
-            JOptionPane.showMessageDialog(this, "La cita no tiene un veterinario asignado.");
-            return;
-        }
-
-        Consulta consulta = new Consulta(id, diagnostico, tratamiento, medicamento, veterinario, cita.getFecha(), cita.getMascota(),
-                cita.getDescripcion(), cita);
-
-        boolean agregada = controladorConsulta.registrarConsulta(consulta);
-        if (agregada) {
-            veterinario.setDisponibilidad(false);
-            JOptionPane.showMessageDialog(this, "Consulta registrada correctamente.");
-            dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al registrar la consulta.");
+                // Opción 2: Si la tabla está en otra ventana (ventana padre)
+                // if (ventanaPadre != null) {
+                //     ventanaPadre.actualizarTablaCitas();
+                // }
+                // this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "No se pudo registrar la consulta.", "Error", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al registrar la consulta: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
