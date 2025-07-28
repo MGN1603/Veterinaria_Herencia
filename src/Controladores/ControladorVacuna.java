@@ -14,9 +14,9 @@ public class ControladorVacuna {
     private final DaoVacuna daoVacuna;
     private final DaoMascota daoMascota;
 
-    public ControladorVacuna() {
-        this.daoVacuna = new DaoVacuna();
-        this.daoMascota = new DaoMascota();
+    public ControladorVacuna(DaoVacuna daoVacuna, DaoMascota daoMascota) {
+        this.daoVacuna = daoVacuna;
+        this.daoMascota = daoMascota;
     }
 
     public ArrayList<VacunaDTO> getVacunas() {
@@ -33,10 +33,7 @@ public class ControladorVacuna {
         if (vacuna.getIdMascota() <= 0) {
             throw new VacunaInvalidaExcepcion("El ID de mascota no es válido.");
         }
-        System.out.println("Mascotas actualmente en memoria en DaoMascota desde Vacuna:");
-        for (MascotaDTO m : daoMascota.getListaMascotas()) {
-            System.out.println(m.getIdMascota()+ " - " + m.getNombre());
-        }
+        
         MascotaDTO mascota = daoMascota.buscarMascota(vacuna.getIdMascota());
         if (mascota == null) {
             throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + vacuna.getIdMascota());

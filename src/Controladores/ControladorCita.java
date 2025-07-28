@@ -22,10 +22,24 @@ public class ControladorCita {
         this.daoCita = new DaoCita();
         this.daoMascota = new DaoMascota();
         this.daoConsulta = new DaoConsulta();
+
     }
 
     public ArrayList<CitaDTO> obtenerCitaDTO() {
         return daoCita.getCitas();
+    }
+
+    public ArrayList<CitaDTO> obtenerCitasPorMascota(int idMascota) {
+        return daoCita.obtenerCitasPorMascota(idMascota);
+    }
+
+    public ArrayList<CitaDTO> obtenerCitasPendientes() {
+        return daoCita.obtenerCitasPendientes();
+    }
+
+    public boolean citaPuedeRecibirConsulta(int idCita) {
+        CitaDTO cita = daoCita.buscarCitaPorId(idCita);
+        return cita != null && !cita.isAtendida() && cita.getIdConsulta() == 0;
     }
 
     public boolean registrarCita(CitaDTO cita) throws MascotaNoEncontradaExcepcion {
@@ -33,7 +47,6 @@ public class ControladorCita {
             throw new IllegalArgumentException("La cita no puede ser null.");
         }
 
-        // Validar que la mascota exista
         MascotaDTO mascota = daoMascota.buscarMascota(cita.getIdMascota());
         if (mascota == null) {
             throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + cita.getIdMascota());
@@ -50,7 +63,6 @@ public class ControladorCita {
         return cita;
     }
 
-    // MÉTODO MEJORADO con más validaciones
     public boolean actualizarConsultaCita(int idCita, int idConsulta)
             throws CitaNoEncontradaExcepcion, CitaYaAtendidaExcepcion {
 
@@ -66,14 +78,23 @@ public class ControladorCita {
         return daoCita.actualizarConsulta(idCita, idConsulta);
     }
 
-    // MÉTODO MEJORADO - tabla con estado más detallado
+    public boolean eliminarCitaPendiente(int idCita) throws CitaNoEncontradaExcepcion, CitaYaAtendidaExcepcion {
+        CitaDTO cita = daoCita.buscarCitaPorId(idCita);
+        if (cita == null) {
+            throw new CitaNoEncontradaExcepcion("No existe una cita con ID: " + idCita);
+        }
+
+        if (cita.isAtendida()) {
+            throw new CitaYaAtendidaExcepcion("No puedes eliminar una cita que ya fue atendida.");
+        }
+        return daoCita.eliminarCitaPorId(idCita);
+    }
+
     public DefaultTableModel listarCitas() {
         String[] columnas = {"ID", "Mascota", "Fecha", "Hora", "Estado", "ID Consulta"};
         DefaultTableModel modelo = new DefaultTableModel(columnas, 0);
 
-        ArrayList<CitaDTO> lista = daoCita.getCitas();
-
-        for (CitaDTO cita : lista) {
+        for (CitaDTO cita : daoCita.getCitas()) {
             MascotaDTO mascota = daoMascota.buscarMascota(cita.getIdMascota());
 
             String estado;
@@ -87,7 +108,7 @@ public class ControladorCita {
 
             modelo.addRow(new Object[]{
                 cita.getIdCita(),
-                (mascota != null ? mascota.getNombre() : "Desconocida"),
+                mascota != null ? mascota.getNombre() : "Desconocida",
                 cita.getFecha(),
                 cita.getHoraCita().toLocalTime(),
                 estado,
@@ -99,20 +120,12 @@ public class ControladorCita {
     }
 
     public int generarIdCita() {
-        return daoCita.getCitas().size() + 1;
-    }
-
-    public ArrayList<CitaDTO> obtenerCitasPorMascota(int idMascota) {
-        return daoCita.obtenerCitasPorMascota(idMascota);
-    }
-
-    public ArrayList<CitaDTO> obtenerCitasPendientes() {
-        return daoCita.obtenerCitasPendientes();
-    }
-
-    // NUEVO MÉTODO - verificar si una cita puede recibir consulta
-    public boolean citaPuedeRecibirConsulta(int idCita) {
-        CitaDTO cita = daoCita.buscarCitaPorId(idCita);
-        return cita != null && !cita.isAtendida() && cita.getIdConsulta() == 0;
+        int maxId = 0;
+        for (CitaDTO cita : daoCita.getCitas()) {
+            if (cita.getIdCita() > maxId) {
+                maxId = cita.getIdCita();
+            }
+        }
+        return maxId + 1;
     }
 }

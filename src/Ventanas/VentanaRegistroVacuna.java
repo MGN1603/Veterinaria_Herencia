@@ -20,7 +20,6 @@ public class VentanaRegistroVacuna extends javax.swing.JDialog {
         this.controladorVacuna = controladorVacuna;
         ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
         setIconImage(icono.getImage());
-        setVisible(true);
         setTitle("Registro de vacuna para: " + mascota.getNombre());
         System.out.println("ID mascota recibido: " + mascota.getIdMascota());
 

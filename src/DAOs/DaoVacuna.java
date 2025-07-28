@@ -1,46 +1,47 @@
 package DAOs;
 
 import DTOs.VacunaDTO;
-import Persistencia.SerializadoraVacuna;
+import Persistencia.GestorPersistencia;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class DaoVacuna {
 
-    private final ArrayList<VacunaDTO> vacunas;
-    private final SerializadoraVacuna serializadoraVacuna;
-
-    public DaoVacuna() {
-        this.serializadoraVacuna = new SerializadoraVacuna();
-        this.vacunas = serializadoraVacuna.getListaVacuna();
-
-    }
+    private final String RUTA = "datos/vacunas.dat";
+    private final GestorPersistencia gestor = GestorPersistencia.getInstance();
 
     public ArrayList<VacunaDTO> getVacunas() {
-        return vacunas;
+        List<VacunaDTO> lista = gestor.cargarLista(RUTA);
+        return lista != null ? new ArrayList<>(lista) : new ArrayList<>();
     }
 
     public boolean registrarVacuna(VacunaDTO vacuna) {
-        if (vacuna != null && vacuna.getIdMascota() > 0) {
-            vacunas.add(vacuna);
-            serializadoraVacuna.escribirVacuna();
-            return true;
+        if (vacuna == null || vacuna.getIdMascota() <= 0) {
+            return false;
         }
-        return false;
+
+        ArrayList<VacunaDTO> lista = getVacunas();
+        lista.add(vacuna);
+        gestor.guardarLista(RUTA, lista);
+        return true;
     }
 
     public ArrayList<VacunaDTO> obtenerVacunasPorMascota(int idMascota) {
         ArrayList<VacunaDTO> resultado = new ArrayList<>();
-        for (VacunaDTO vacuna : vacunas) {
+        for (VacunaDTO vacuna : getVacunas()) {
             if (vacuna.getIdMascota() == idMascota) {
                 resultado.add(vacuna);
-                serializadoraVacuna.escribirVacuna();
             }
         }
         return resultado;
     }
 
     public void eliminarVacunaMascota(int idMascota) {
-        vacunas.removeIf(vacuna -> vacuna.getIdMascota() == idMascota);
-        serializadoraVacuna.escribirVacuna();
+        ArrayList<VacunaDTO> lista = getVacunas();
+        boolean modificada = lista.removeIf(v -> v.getIdMascota() == idMascota);
+        if (modificada) {
+            gestor.guardarLista(RUTA, lista);
+        }
     }
 }

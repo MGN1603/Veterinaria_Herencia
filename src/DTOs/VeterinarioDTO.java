@@ -75,11 +75,13 @@ public class VeterinarioDTO implements Serializable {
     }
 
     public String mostrarDatos() {
-        return "Documento: " + documento + "\n"
-                + "Nombre: " + nombre + "\n"
-                + "Teléfono: " + telefono + "\n"
+        return "Nombre: " + nombre + "\n"
+                + "Documento: " + documento + "\n"
+                + "Telefono: " + telefono + "\n"
                 + "Correo: " + correo + "\n"
                 + "Especialidad: " + especialidad + "\n"
-                + "Disponible: " + (disponibilidad ? "Sí" : "No");
+                + "Disponibilidad: " + disponibilidad;
+
     }
+
 }

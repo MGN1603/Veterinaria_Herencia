@@ -7,7 +7,6 @@ import DTOs.PropietarioDTO;
 import Excepciones.PropietarioExistenteExcepcion;
 import Excepciones.PropietarioNoEncontradoExcepcion;
 import javax.swing.table.DefaultTableModel;
-import java.util.ArrayList;
 
 public class ControladorPropietario {
 
@@ -27,6 +26,7 @@ public class ControladorPropietario {
         if (dao.buscarPropietario(propietario.getDocumento()) != null) {
             throw new PropietarioExistenteExcepcion("Ya existe un propietario con ese documento.");
         }
+
         return dao.guardarPropietario(propietario);
     }
 
@@ -52,10 +52,12 @@ public class ControladorPropietario {
         if (actual == null) {
             throw new PropietarioNoEncontradoExcepcion("No se puede eliminar: propietario no encontrado.");
         }
+
         boolean eliminado = dao.eliminarPropietario(documento);
         if (eliminado) {
             daoMascota.ponerMascotasEnAdopcionPorPropietario(documento);
         }
+
         return eliminado;
     }
 
@@ -63,9 +65,7 @@ public class ControladorPropietario {
         DefaultTableModel modelo = new DefaultTableModel();
         modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Documento", "Teléfono", "Correo"});
 
-        ArrayList<PropietarioDTO> lista = dao.getPropietarios();
-
-        for (PropietarioDTO p : lista) {
+        for (PropietarioDTO p : dao.getPropietarios()) {
             modelo.addRow(new Object[]{
                 p.getDocumento(),
                 p.getNombre(),
@@ -80,10 +80,9 @@ public class ControladorPropietario {
 
     public DefaultTableModel obtenerTablaMascotasDePropietario(int documento) throws PropietarioNoEncontradoExcepcion {
         buscarPropietario(documento);
+
         DefaultTableModel modelo = new DefaultTableModel();
         modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Especie", "Raza", "Edad", "Peso"});
-
-        DaoMascota daoMascota = new DaoMascota();
 
         for (MascotaDTO m : daoMascota.getListaMascotas()) {
             if (m.getIdPropietario() == documento) {

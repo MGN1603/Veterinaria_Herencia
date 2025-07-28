@@ -1,34 +1,34 @@
 package DAOs;
 
 import DTOs.ConsultaDTO;
-import Persistencia.SerializadoraConsulta;
+import Persistencia.GestorPersistencia;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class DaoConsulta {
 
-    private final ArrayList<ConsultaDTO> consultas;
-    private final SerializadoraConsulta serializadoraConsulta;
-
-    public DaoConsulta() {
-        this.serializadoraConsulta = new SerializadoraConsulta();
-        this.consultas = serializadoraConsulta.getListaConsulta();
-    }
+    private final String RUTA = "datos/consultas.dat";
+    private final GestorPersistencia gestor = GestorPersistencia.getInstance();
 
     public ArrayList<ConsultaDTO> getConsultas() {
-        return consultas;
+        List<ConsultaDTO> lista = gestor.cargarLista(RUTA);
+        return lista != null ? new ArrayList<>(lista) : new ArrayList<>();
     }
 
     public boolean registrarConsulta(ConsultaDTO consulta) {
-        if (consulta != null && buscarConsulta(consulta.getIdConsulta()) == null) {
-            consultas.add(consulta);
-            serializadoraConsulta.escribirConsulta();
-            return true;
+        if (consulta == null || buscarConsulta(consulta.getIdConsulta()) != null) {
+            return false;
         }
-        return false;
+
+        ArrayList<ConsultaDTO> lista = getConsultas();
+        lista.add(consulta);
+        gestor.guardarLista(RUTA, lista);
+        return true;
     }
 
     public ConsultaDTO buscarConsulta(int idConsulta) {
-        for (ConsultaDTO consulta : consultas) {
+        for (ConsultaDTO consulta : getConsultas()) {
             if (consulta.getIdConsulta() == idConsulta) {
                 return consulta;
             }
@@ -38,7 +38,7 @@ public class DaoConsulta {
 
     public ArrayList<ConsultaDTO> obtenerConsultasPorMascota(int idMascota) {
         ArrayList<ConsultaDTO> resultado = new ArrayList<>();
-        for (ConsultaDTO consulta : consultas) {
+        for (ConsultaDTO consulta : getConsultas()) {
             if (consulta.getIdMascota() == idMascota) {
                 resultado.add(consulta);
             }
@@ -46,9 +46,8 @@ public class DaoConsulta {
         return resultado;
     }
 
-    // NUEVO MÉTODO - verificar si ya existe consulta para una cita
     public boolean existeConsultaParaCita(int idCita) {
-        for (ConsultaDTO consulta : consultas) {
+        for (ConsultaDTO consulta : getConsultas()) {
             if (consulta.getIdCita() == idCita) {
                 return true;
             }
@@ -56,9 +55,8 @@ public class DaoConsulta {
         return false;
     }
 
-    // NUEVO MÉTODO - buscar consulta por ID de cita
     public ConsultaDTO buscarConsultaPorCita(int idCita) {
-        for (ConsultaDTO consulta : consultas) {
+        for (ConsultaDTO consulta : getConsultas()) {
             if (consulta.getIdCita() == idCita) {
                 return consulta;
             }
@@ -67,7 +65,10 @@ public class DaoConsulta {
     }
 
     public void eliminarConsultaMascota(int idMascota) {
-        consultas.removeIf(consulta -> consulta.getIdMascota() == idMascota);
-        serializadoraConsulta.escribirConsulta();
+        ArrayList<ConsultaDTO> lista = getConsultas();
+        boolean modificada = lista.removeIf(consulta -> consulta.getIdMascota() == idMascota);
+        if (modificada) {
+            gestor.guardarLista(RUTA, lista);
+        }
     }
 }

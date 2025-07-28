@@ -21,13 +21,12 @@ public class ControladorConsulta {
     private final DaoCita daoCita;
     private final DaoMascota daoMascota;
 
-    public ControladorConsulta() {
-        this.daoConsulta = new DaoConsulta();
-        this.daoCita = new DaoCita();
-        this.daoMascota = new DaoMascota();
+    public ControladorConsulta(DaoConsulta daoConsulta, DaoCita daoCita, DaoMascota daoMascota) {
+        this.daoConsulta = daoConsulta;
+        this.daoCita = daoCita;
+        this.daoMascota = daoMascota;
     }
 
-    // MÉTODO PRINCIPAL - registrar consulta con validaciones completas
     public boolean registrarConsulta(ConsultaDTO consulta)
             throws CitaNoEncontradaExcepcion, CitaYaAtendidaExcepcion,
             ConsultaYaExistenteExcepcion, MascotaNoEncontradaExcepcion {
@@ -36,38 +35,30 @@ public class ControladorConsulta {
             throw new IllegalArgumentException("La consulta no puede ser null.");
         }
 
-        // 1. Verificar que la cita existe
         CitaDTO cita = daoCita.buscarCitaPorId(consulta.getIdCita());
         if (cita == null) {
             throw new CitaNoEncontradaExcepcion("No se encontró la cita con ID: " + consulta.getIdCita());
         }
 
-        // 2. Verificar que la cita no esté ya atendida
         if (cita.isAtendida()) {
             throw new CitaYaAtendidaExcepcion("La cita con ID " + consulta.getIdCita() + " ya fue atendida.");
         }
 
-        // 3. Verificar que no exista ya una consulta para esta cita
         if (daoConsulta.existeConsultaParaCita(consulta.getIdCita())) {
             throw new ConsultaYaExistenteExcepcion("Ya existe una consulta para la cita con ID: " + consulta.getIdCita());
         }
 
-        // 4. Verificar que la mascota existe
         MascotaDTO mascota = daoMascota.buscarMascota(consulta.getIdMascota());
-        if (mascota == null) {  
+        if (mascota == null) {
             throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + consulta.getIdMascota());
         }
 
-        // 5. Registrar la consulta
         boolean consultaRegistrada = daoConsulta.registrarConsulta(consulta);
 
         if (consultaRegistrada) {
-            // 6. Actualizar la cita para marcarla como atendida
             boolean citaActualizada = daoCita.actualizarConsulta(consulta.getIdCita(), consulta.getIdConsulta());
 
             if (!citaActualizada) {
-                // Si falla la actualización de la cita, habría que hacer rollback
-                // pero como usas serialización, esto es complicado
                 System.err.println("Advertencia: Consulta registrada pero no se pudo actualizar la cita");
             }
 
@@ -114,7 +105,13 @@ public class ControladorConsulta {
         return modelo;
     }
 
-    public int generarIdConsulta() {
-        return daoConsulta.getConsultas().size() + 1;
+    public int generarNuevoIdConsulta() {
+        int maxId = 0;
+        for (ConsultaDTO consulta : daoConsulta.getConsultas()) {
+            if (consulta.getIdConsulta() > maxId) {
+                maxId = consulta.getIdConsulta();
+            }
+        }
+        return maxId + 1;
     }
 }

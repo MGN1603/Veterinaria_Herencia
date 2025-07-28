@@ -1,34 +1,34 @@
 package DAOs;
 
 import DTOs.MascotaDTO;
-import Persistencia.SerializadoraMascota;
+import Persistencia.GestorPersistencia;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class DaoMascota {
 
-    private final ArrayList<MascotaDTO> listaMascota;
-    private final SerializadoraMascota serializadoraMascota;
-
-    public DaoMascota() {
-        this.serializadoraMascota = new SerializadoraMascota();
-        this.listaMascota = serializadoraMascota.getListaMascota();
-    }
+    private final String RUTA = "datos/mascotas.dat";
+    private final GestorPersistencia gestor = GestorPersistencia.getInstance();
 
     public ArrayList<MascotaDTO> getListaMascotas() {
-        return listaMascota;
+        List<MascotaDTO> mascotas = gestor.cargarLista(RUTA);
+        return mascotas != null ? new ArrayList<>(mascotas) : new ArrayList<>();
     }
 
     public boolean guardarMascota(MascotaDTO mascota) {
-        if (mascota != null && buscarMascota(mascota.getIdMascota()) == null) {
-            listaMascota.add(mascota);
-            serializadoraMascota.escribirMascota();
-            return true;
+        if (mascota == null || buscarMascota(mascota.getIdMascota()) != null) {
+            return false;
         }
-        return false;
+
+        ArrayList<MascotaDTO> lista = getListaMascotas();
+        lista.add(mascota);
+        gestor.guardarLista(RUTA, lista);
+        return true;
     }
 
     public MascotaDTO buscarMascota(int idMascota) {
-        for (MascotaDTO m : listaMascota) {
+        for (MascotaDTO m : getListaMascotas()) {
             if (m.getIdMascota() == idMascota) {
                 return m;
             }
@@ -37,36 +37,33 @@ public class DaoMascota {
     }
 
     public void ponerMascotasEnAdopcionPorPropietario(int idPropietario) {
-        for (MascotaDTO mascota : listaMascota) {
+        ArrayList<MascotaDTO> lista = getListaMascotas();
+        for (MascotaDTO mascota : lista) {
             if (mascota.getIdPropietario() == idPropietario) {
                 mascota.setIdPropietario(0);
             }
         }
-        serializadoraMascota.escribirMascota();
+        gestor.guardarLista(RUTA, lista);
     }
 
     public boolean actualizarDatosMascota(MascotaDTO mascota) {
-        MascotaDTO existente = buscarMascota(mascota.getIdMascota());
-        if (existente != null) {
-            existente.setNombre(mascota.getNombre());
-            existente.setPeso(mascota.getPeso());
-            existente.setEdad(mascota.getEdad());
-            existente.setEspecie(mascota.getEspecie());
-            existente.setRaza(mascota.getRaza());
-            existente.setIdPropietario(mascota.getIdPropietario()); 
-            serializadoraMascota.escribirMascota();
-            return true;
+        ArrayList<MascotaDTO> lista = getListaMascotas();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getIdMascota() == mascota.getIdMascota()) {
+                lista.set(i, mascota);
+                gestor.guardarLista(RUTA, lista);
+                return true;
+            }
         }
         return false;
     }
 
     public boolean eliminarMascota(int idMascota) {
-        MascotaDTO encontrada = buscarMascota(idMascota);
-        if (encontrada != null) {
-            listaMascota.remove(encontrada);
-            serializadoraMascota.escribirMascota();
-            return true;
+        ArrayList<MascotaDTO> lista = getListaMascotas();
+        boolean eliminado = lista.removeIf(m -> m.getIdMascota() == idMascota);
+        if (eliminado) {
+            gestor.guardarLista(RUTA, lista);
         }
-        return false;
+        return eliminado;
     }
 }

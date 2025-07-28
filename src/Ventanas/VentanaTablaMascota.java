@@ -15,7 +15,6 @@ public class VentanaTablaMascota extends javax.swing.JDialog {
         this.setLocationRelativeTo(null);
         ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
         setIconImage(icono.getImage());
-        setVisible(true);
         this.controladorPropietario = controladorPropietario;
 
     }

@@ -17,7 +17,6 @@ public class VentanaTablaVacuna extends javax.swing.JDialog {
         this.setLocationRelativeTo(null);
         ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
         setIconImage(icono.getImage());
-        setVisible(true);
         this.mascota = mascota;
         this.controladorVacuna = controladorVacuna;
         setTitle("Vacunas de: " + mascota.getNombre());

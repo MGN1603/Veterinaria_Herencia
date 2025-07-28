@@ -4,27 +4,29 @@ import Controladores.ControladorConsulta;
 import Controladores.ControladorVeterinario;
 import DTOs.CitaDTO;
 import DTOs.ConsultaDTO;
+import Util.ActualizarTablaCita;
 import java.time.LocalDate;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 public class VentanaRegistroConsulta extends javax.swing.JDialog {
-    
+
     private final CitaDTO cita;
     private final ControladorConsulta controladorConsulta;
-    
-    public VentanaRegistroConsulta(java.awt.Frame parent, boolean modal, CitaDTO cita, ControladorConsulta controladorConsulta, ControladorVeterinario controladorVet) {
+    private final ActualizarTablaCita actualizar;
+
+    public VentanaRegistroConsulta(java.awt.Frame parent, boolean modal, CitaDTO cita, ControladorConsulta controladorConsulta, ControladorVeterinario controladorVet, ActualizarTablaCita actualizar) {
         super(parent, modal);
         initComponents();
         setLocationRelativeTo(null);
         setTitle("Cita de la Mascota con ID: " + cita.getIdMascota());
         ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
         setIconImage(icono.getImage());
-        setVisible(true);
         this.cita = cita;
         this.controladorConsulta = controladorConsulta;
+        this.actualizar = actualizar;
     }
-    
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -173,18 +175,18 @@ public class VentanaRegistroConsulta extends javax.swing.JDialog {
         String tratamiento = txtAreaTratamiento.getText();
         String medicamentos = txtMedicamento.getText().trim();
         String descripcion = txtDiagnostico.getText().trim();
-        
+
         if (diagnostico.isEmpty() || tratamiento.isEmpty() || medicamentos.isEmpty() || descripcion.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
-        int idConsulta = controladorConsulta.generarIdConsulta();
+
+        int idConsulta = controladorConsulta.generarNuevoIdConsulta();
         LocalDate fecha = cita.getFecha();
         int idVeterinario = cita.getIdVeterinario();
         int idCita = cita.getIdCita();
         int idMascota = cita.getIdMascota();
-        
+
         ConsultaDTO consultaDTO = new ConsultaDTO(
                 idConsulta,
                 fecha,
@@ -196,17 +198,15 @@ public class VentanaRegistroConsulta extends javax.swing.JDialog {
                 idCita,
                 idMascota
         );
-        
+
         try {
             boolean registrada = controladorConsulta.registrarConsulta(consultaDTO);
             if (registrada) {
+                if (actualizar != null) {
+                    actualizar.actualizarTabla();
+                }
                 JOptionPane.showMessageDialog(this, "Consulta registrada con éxito.");
-
-                // Opción 2: Si la tabla está en otra ventana (ventana padre)
-                // if (ventanaPadre != null) {
-                //     ventanaPadre.actualizarTablaCitas();
-                // }
-                // this.dispose();
+                dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "No se pudo registrar la consulta.", "Error", JOptionPane.WARNING_MESSAGE);
             }

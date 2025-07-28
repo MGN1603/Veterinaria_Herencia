@@ -5,11 +5,14 @@ import DAOs.DaoConsulta;
 import DAOs.DaoMascota;
 import DAOs.DaoPropietario;
 import DAOs.DaoVacuna;
+import DAOs.DaoVeterinario;
 import DTOs.MascotaDTO;
 import DTOs.PropietarioDTO;
 import Excepciones.MascotaExistenteExcepcion;
 import Excepciones.MascotaNoEncontradaExcepcion;
 import Excepciones.PropietarioNoEncontradoExcepcion;
+
+import java.util.ArrayList;
 import javax.swing.table.DefaultTableModel;
 
 public class ControladorMascota {
@@ -19,13 +22,20 @@ public class ControladorMascota {
     private final DaoCita daoCita;
     private final DaoConsulta daoConsulta;
     private final DaoVacuna daoVacuna;
+    private final DaoVeterinario daoVeterinario;
+    private final HistorialClinico historialClinico;
 
-    public ControladorMascota() {
-        this.mascotaDAO = new DaoMascota();
-        this.daoPropietario = new DaoPropietario();
-        this.daoCita = new DaoCita();
-        this.daoConsulta = new DaoConsulta();
-        this.daoVacuna = new DaoVacuna();
+    public ControladorMascota(DaoMascota mascotaDAO, DaoPropietario daoPropietario, DaoCita daoCita,
+            DaoConsulta daoConsulta, DaoVacuna daoVacuna, DaoVeterinario daoVeterinario) {
+        this.mascotaDAO = mascotaDAO;
+        this.daoPropietario = daoPropietario;
+        this.daoCita = daoCita;
+        this.daoConsulta = daoConsulta;
+        this.daoVacuna = daoVacuna;
+        this.daoVeterinario = daoVeterinario;
+        this.historialClinico = new HistorialClinico(
+                daoCita, daoVacuna, daoConsulta, daoVeterinario, mascotaDAO
+        );
     }
 
     public boolean guardarMascota(MascotaDTO mascota) throws MascotaExistenteExcepcion {
@@ -36,6 +46,7 @@ public class ControladorMascota {
         if (mascotaDAO.buscarMascota(mascota.getIdMascota()) != null) {
             throw new MascotaExistenteExcepcion("Ya existe una mascota con ID: " + mascota.getIdMascota());
         }
+
         return mascotaDAO.guardarMascota(mascota);
     }
 
@@ -43,85 +54,46 @@ public class ControladorMascota {
             throws PropietarioNoEncontradoExcepcion, MascotaExistenteExcepcion {
 
         if (mascota == null) {
-            throw new IllegalArgumentException("La mascota no puede ser nula");
+            throw new IllegalArgumentException("La mascota no puede ser nula.");
         }
-
         if (mascotaDAO.buscarMascota(mascota.getIdMascota()) != null) {
             throw new MascotaExistenteExcepcion("Ya existe una mascota con ID: " + mascota.getIdMascota());
         }
 
-        PropietarioDTO propietario = daoPropietario.buscarPropietario(idPropietario);
-        if (propietario == null) {
-            throw new PropietarioNoEncontradoExcepcion("No se encontró el propietario con ID: " + idPropietario);
-        }
-
+        PropietarioDTO propietario = validarYObtenerPropietario(idPropietario);
         mascota.setIdPropietario(idPropietario);
+
         return mascotaDAO.guardarMascota(mascota);
     }
 
     public MascotaDTO buscarMascota(int idMascota) throws MascotaNoEncontradaExcepcion {
-        MascotaDTO encontrada = mascotaDAO.buscarMascota(idMascota);
-        if (encontrada == null) {
-            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + idMascota);
-        }
-        return encontrada;
-    }
-
-    public boolean asignarPropietarioAMascota(int idMascota, int idPropietario)
-            throws MascotaNoEncontradaExcepcion, PropietarioNoEncontradoExcepcion {
-
-        // Validar parámetros
-        if (idMascota <= 0) {
-            throw new IllegalArgumentException("El ID de la mascota debe ser un número positivo.");
-        }
-
-        if (idPropietario <= 0) {
-            throw new IllegalArgumentException("El ID del propietario debe ser un número positivo.");
-        }
-
-        // Verificar que la mascota existe
-        MascotaDTO mascota = mascotaDAO.buscarMascota(idMascota);
-        if (mascota == null) {
-            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + idMascota);
-        }
-
-        // Verificar que el propietario existe
-        PropietarioDTO propietario = daoPropietario.buscarPropietario(idPropietario);
-        if (propietario == null) {
-            throw new PropietarioNoEncontradoExcepcion("No se encontró el propietario con ID: " + idPropietario);
-        }
-
-        // Asignar el propietario a la mascota
-        mascota.setIdPropietario(idPropietario);
-        return mascotaDAO.actualizarDatosMascota(mascota);
-    }
-
-    // Método adicional para verificar si una mascota ya tiene propietario
-    public boolean mascotaTienePropietario(int idMascota) throws MascotaNoEncontradaExcepcion {
-        MascotaDTO mascota = mascotaDAO.buscarMascota(idMascota);
-        if (mascota == null) {
-            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + idMascota);
-        }
-        return mascota.getIdPropietario() > 0;
-    }
-
-    public boolean actualizarMascota(MascotaDTO dto) throws MascotaNoEncontradaExcepcion {
-        MascotaDTO actual = mascotaDAO.buscarMascota(dto.getIdMascota());
-        if (actual == null) {
-            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota para actualizar sus datos.");
-        }
-        return mascotaDAO.actualizarDatosMascota(dto);
+        return validarYObtenerMascota(idMascota);
     }
 
     public boolean eliminarMascota(int idMascota) throws MascotaNoEncontradaExcepcion {
-        MascotaDTO mascota = mascotaDAO.buscarMascota(idMascota);
-        if (mascota == null) {
-            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota: no se puede eliminar una mascota no existente.");
-        }
-        daoCita.eliminarCitasPorMascota(idMascota);
+        validarYObtenerMascota(idMascota);
+
+        // Eliminación en cascada
+        daoCita.eliminarCitaPorMascota(idMascota);
         daoConsulta.eliminarConsultaMascota(idMascota);
         daoVacuna.eliminarVacunaMascota(idMascota);
+
         return mascotaDAO.eliminarMascota(idMascota);
+    }
+
+    public boolean actualizarMascota(MascotaDTO mascotaActualizada)
+            throws MascotaNoEncontradaExcepcion {
+        validarYObtenerMascota(mascotaActualizada.getIdMascota());
+        return mascotaDAO.actualizarDatosMascota(mascotaActualizada);
+    }
+
+    public ArrayList<MascotaDTO> obtenerMascotas() {
+        return mascotaDAO.getListaMascotas();
+    }
+
+    public boolean mascotaTienePropietario(int idMascota) throws MascotaNoEncontradaExcepcion {
+        MascotaDTO mascota = validarYObtenerMascota(idMascota);
+        return mascota.getIdPropietario() > 0;
     }
 
     public DefaultTableModel listarMascotasTabla() {
@@ -150,5 +122,34 @@ public class ControladorMascota {
         }
 
         return modelo;
+    }
+
+    public MascotaDTO validarYObtenerMascota(int idMascota) throws MascotaNoEncontradaExcepcion {
+        if (idMascota <= 0) {
+            throw new IllegalArgumentException("ID de mascota inválido.");
+        }
+        MascotaDTO mascota = mascotaDAO.buscarMascota(idMascota);
+        if (mascota == null) {
+            throw new MascotaNoEncontradaExcepcion("No se encontró la mascota con ID: " + idMascota);
+        }
+        return mascota;
+    }
+
+    public PropietarioDTO validarYObtenerPropietario(int idPropietario)
+            throws PropietarioNoEncontradoExcepcion {
+        if (idPropietario <= 0) {
+            throw new IllegalArgumentException("ID de propietario inválido.");
+        }
+        PropietarioDTO propietario = daoPropietario.buscarPropietario(idPropietario);
+        if (propietario == null) {
+            throw new PropietarioNoEncontradoExcepcion("No se encontró el propietario con ID: " + idPropietario);
+        }
+        return propietario;
+    }
+
+    public String obtenerHistorialClinico(int idMascota) throws MascotaNoEncontradaExcepcion {
+        validarYObtenerMascota(idMascota);
+
+        return historialClinico.obtenerHistorialClinico(idMascota);
     }
 }

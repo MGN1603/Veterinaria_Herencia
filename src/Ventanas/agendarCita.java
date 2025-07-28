@@ -24,15 +24,16 @@ public class agendarCita extends javax.swing.JDialog {
             ControladorVeterinario controladorVeterinario, MascotaDTO mascota) {
         super(parent, modal);
         initComponents();
+       // int idm = mascota.getIdMascota();
         setLocationRelativeTo(null);
         ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
         setIconImage(icono.getImage());
-        setVisible(true);
         setTitle("Cita para la Mascota: " + mascota.getNombre());
         this.controladorCita = controladorCita;
         this.controladorVeterinario = controladorVeterinario;
         this.mascota = mascota;
         crearComboBoxVeterinarios();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -52,6 +53,7 @@ public class agendarCita extends javax.swing.JDialog {
         btnCancelar = new javax.swing.JButton();
         lblFechaCita1 = new javax.swing.JLabel();
         txtFechaCita1 = new javax.swing.JTextField();
+        lblId = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -140,6 +142,7 @@ public class agendarCita extends javax.swing.JDialog {
         lblFechaCita1.setText("Fecha Cita:");
         panelDatos.add(lblFechaCita1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 80, 90, -1));
         panelDatos.add(txtFechaCita1, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 80, 191, -1));
+        panelDatos.add(lblId, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 80, 110, 30));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -179,16 +182,8 @@ public class agendarCita extends javax.swing.JDialog {
             VeterinarioDTO veterinario = (VeterinarioDTO) comboBoxVeterinarios.getSelectedItem();
             int idCita = controladorCita.generarIdCita();
 
-            CitaDTO citaDTO = new CitaDTO(
-                    idCita,
-                    fecha,
-                    descripcion,
-                    fechaHora,
-                    false,
-                    veterinario.getDocumento(),
-                    mascota.getIdMascota(),
-                    -1
-            );
+            CitaDTO citaDTO = new CitaDTO(idCita, fecha, descripcion, fechaHora,false, veterinario.getDocumento(), mascota.getIdMascota(), -1);
+            
 
             if (controladorCita.registrarCita(citaDTO)) {
                 JOptionPane.showMessageDialog(this, "Cita registrada correctamente.");
@@ -223,6 +218,7 @@ public class agendarCita extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFechaCita1;
     private javax.swing.JLabel lblHoraCita;
+    private javax.swing.JLabel lblId;
     private javax.swing.JLabel lblMotivo;
     private javax.swing.JLabel lblTitulo;
     private javax.swing.JLabel lblVeterinario;

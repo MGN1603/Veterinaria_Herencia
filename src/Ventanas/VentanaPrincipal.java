@@ -6,18 +6,30 @@ import Controladores.ControladorMascota;
 import Controladores.ControladorPropietario;
 import Controladores.ControladorVacuna;
 import Controladores.ControladorVeterinario;
+import DAOs.DaoCita;
+import DAOs.DaoConsulta;
+import DAOs.DaoMascota;
+import DAOs.DaoPropietario;
+import DAOs.DaoVacuna;
+import DAOs.DaoVeterinario;
 import DTOs.CitaDTO;
 import DTOs.MascotaDTO;
 import DTOs.PropietarioDTO;
 import DTOs.VeterinarioDTO;
+import Excepciones.CitaNoEncontradaExcepcion;
+import Excepciones.CitaYaAtendidaExcepcion;
 import Excepciones.MascotaExistenteExcepcion;
 import Excepciones.MascotaNoEncontradaExcepcion;
 import Excepciones.PropietarioExistenteExcepcion;
 import Excepciones.PropietarioNoEncontradoExcepcion;
 import Excepciones.VeterinarioExistenteExcepcion;
 import Excepciones.VeterinarioNoEncontradoExcepcion;
+import java.awt.Color;
+import java.awt.Dimension;
 import javax.swing.ImageIcon;
+import javax.swing.JEditorPane;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 
 public class VentanaPrincipal extends javax.swing.JFrame {
 
@@ -32,21 +44,28 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     public VentanaPrincipal() {
         initComponents();
         this.setLocationRelativeTo(null);
-        setTitle("Sistema Gestion Veterinaria");
+        setTitle("Sistema Gestión Veterinaria");
+
         ImageIcon icono = new ImageIcon(getClass().getResource("/Imagenes/veterinario (5).png"));
         setIconImage(icono.getImage());
-        setVisible(true);
+        DaoPropietario daoPropietario = new DaoPropietario();
+        DaoMascota daoMascota = new DaoMascota();
+        DaoCita daoCita = new DaoCita();
+        DaoConsulta daoConsulta = new DaoConsulta();
+        DaoVacuna daoVacuna = new DaoVacuna();
+        DaoVeterinario daoVeterinario = new DaoVeterinario();
+
         controladorPropietario = new ControladorPropietario();
-        controladorMascota = new ControladorMascota();
-        controladorCita = new ControladorCita();
+        controladorMascota = new ControladorMascota(daoMascota, daoPropietario, daoCita, daoConsulta, daoVacuna, daoVeterinario);
         controladorVet = new ControladorVeterinario();
-        controladorConsulta = new ControladorConsulta();
-        controladorVacuna = new ControladorVacuna();
+        controladorCita = new ControladorCita();
+        controladorConsulta = new ControladorConsulta(daoConsulta, daoCita, daoMascota);
+        controladorVacuna = new ControladorVacuna(daoVacuna, daoMascota);
+
         actualizarTablaPropietario();
         actualizarTablaVet();
         cargarTablaMascotas();
         listaCita();
-
     }
 
     @SuppressWarnings("unchecked")
@@ -149,6 +168,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         lblListaCita = new javax.swing.JLabel();
         jSeparator9 = new javax.swing.JSeparator();
         jSeparator10 = new javax.swing.JSeparator();
+        btnEliminarCita = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -717,6 +737,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnHistorial.setFont(new java.awt.Font("Arial Black", 0, 12)); // NOI18N
         btnHistorial.setForeground(new java.awt.Color(254, 252, 251));
         btnHistorial.setText("Historial");
+        btnHistorial.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHistorialActionPerformed(evt);
+            }
+        });
         panelFondoMascota.add(btnHistorial, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 309, 200, 40));
 
         btnAsignarAPropietarioMascota.setBackground(new java.awt.Color(10, 17, 40));
@@ -882,6 +907,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         lblListaCita.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/informe-medico (2).png"))); // NOI18N
         lblListaCita.setText("Lista Citas");
 
+        btnEliminarCita.setBackground(new java.awt.Color(10, 17, 40));
+        btnEliminarCita.setFont(new java.awt.Font("Arial Black", 0, 18)); // NOI18N
+        btnEliminarCita.setForeground(new java.awt.Color(254, 252, 251));
+        btnEliminarCita.setText("Eliminar Cita");
+        btnEliminarCita.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarCitaActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout panelFondoCitaLayout = new javax.swing.GroupLayout(panelFondoCita);
         panelFondoCita.setLayout(panelFondoCitaLayout);
         panelFondoCitaLayout.setHorizontalGroup(
@@ -903,8 +938,10 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addComponent(lblListaCita, javax.swing.GroupLayout.PREFERRED_SIZE, 327, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(177, 177, 177))
             .addGroup(panelFondoCitaLayout.createSequentialGroup()
-                .addGap(211, 211, 211)
+                .addGap(57, 57, 57)
                 .addComponent(btnAgregarConsulta, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(38, 38, 38)
+                .addComponent(btnEliminarCita, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         panelFondoCitaLayout.setVerticalGroup(
@@ -918,9 +955,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator10, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnAgregarConsulta)
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(panelFondoCitaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(btnAgregarConsulta, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnEliminarCita, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(34, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -968,7 +1007,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
             int documento = Integer.parseInt(docVetStr);
 
-            // Buscar y mostrar el veterinario
             VeterinarioDTO v = controladorVet.buscarVeterinario(documento);
             String datos = v.mostrarDatos();
             JOptionPane.showMessageDialog(this, datos, "Veterinario encontrado", JOptionPane.INFORMATION_MESSAGE);
@@ -1110,6 +1148,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Mascota eliminada correctamente.");
                 limpiarCamposMascota();
                 cargarTablaMascotas();
+                listaCita();
             }
         } catch (MascotaNoEncontradaExcepcion ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al eliminar mascota", JOptionPane.WARNING_MESSAGE);
@@ -1144,14 +1183,12 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             int edad = Integer.parseInt(edadStr);
             double peso = Double.parseDouble(pesoStr);
 
-            // Buscar la mascota existente para obtener su propietario actual
             MascotaDTO mascotaExistente = controladorMascota.buscarMascota(idMascota);
             if (mascotaExistente == null) {
                 JOptionPane.showMessageDialog(this, "La mascota no existe para actualizar.", "Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // Crear DTO actualizado manteniendo el propietario actual
             MascotaDTO dtoActualizado = new MascotaDTO(nombre, idMascota, especie, raza, edad, peso, mascotaExistente.getIdPropietario());
 
             boolean actualizado = controladorMascota.actualizarMascota(dtoActualizado);
@@ -1190,7 +1227,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 datos += "• Peso: " + mascotaDTO.getPeso() + " kg\n";
                 datos += "• Propietario: " + (mascotaDTO.getIdPropietario() != 0 ? mascotaDTO.getIdPropietario() : "Sin dueño") + "\n";
 
-                // Guardamos el propietario actual para que no se pierda al actualizar
                 idPropietarioActualMascota = mascotaDTO.getIdPropietario();
 
                 JOptionPane.showMessageDialog(this, datos, "Mascota encontrada", JOptionPane.INFORMATION_MESSAGE);
@@ -1345,7 +1381,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             boolean actualizar = controladorPropietario.actualizarDatos(actualizado);
 
             if (actualizar) {
-                JOptionPane.showMessageDialog(this, "✅ Datos actualizados correctamente.");
+                JOptionPane.showMessageDialog(this, "Datos actualizados correctamente.");
                 actualizarTablaPropietario();
                 limpiarCamposPropietario();
             }
@@ -1480,7 +1516,19 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         int filaSeleccionada = tablaCita.getSelectedRow();
         if (filaSeleccionada >= 0) {
             CitaDTO cita = controladorCita.obtenerCitaDTO().get(filaSeleccionada);
-            VentanaRegistroConsulta dialog = new VentanaRegistroConsulta(this, true, cita, controladorConsulta, controladorVet);
+            if (cita.isAtendida()) {
+                JOptionPane.showMessageDialog(this, "Esta cita ya ha sido atendida, no se puede registrar otra consulta.");
+                return;
+            }
+
+            VentanaRegistroConsulta dialog = new VentanaRegistroConsulta(
+                    this,
+                    true,
+                    cita,
+                    controladorConsulta,
+                    controladorVet,
+                    () -> listaCita()
+            );
             dialog.setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "Selecciona una cita primero.");
@@ -1510,126 +1558,158 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
 
     private void btnAsignarAPropietarioMascotaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAsignarAPropietarioMascotaActionPerformed
-        // TODO add your handling code here:
         try {
-            // Verificar que hay una fila seleccionada en la tabla
-            int filaSeleccionada = tablaMascota.getSelectedRow();
-
-            if (filaSeleccionada == -1) {
-                JOptionPane.showMessageDialog(this,
-                        "Debe seleccionar una mascota de la tabla primero.",
-                        "Selección requerida",
-                        JOptionPane.WARNING_MESSAGE);
+            int fila = tablaMascota.getSelectedRow();
+            if (fila == -1) {
+                JOptionPane.showMessageDialog(this, "Selecciona una mascota de la tabla primero.",
+                        "Selección requerida", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // Obtener el ID de la mascota desde la tabla.
-            int idMascotaSeleccionada = (Integer) tablaMascota.getValueAt(filaSeleccionada, 0);
-            String nombreMascota = (String) tablaMascota.getValueAt(filaSeleccionada, 1);
+            int idMascota = (int) tablaMascota.getValueAt(fila, 0);
+            String nombreMascota = (String) tablaMascota.getValueAt(fila, 1);
 
-            // Verificar si la mascota ya tiene propietario
-            boolean tienePropietario = controladorMascota.mascotaTienePropietario(idMascotaSeleccionada);
-
-            if (tienePropietario) {
-                int opcion = JOptionPane.showConfirmDialog(this,
-                        "La mascota '" + nombreMascota + "' ya tiene un propietario.\n¿Desea cambiar el propietario?",
-                        "Mascota con propietario",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
-
-                if (opcion != JOptionPane.YES_OPTION) {
+            // Verificar si ya tiene propietario
+            if (controladorMascota.mascotaTienePropietario(idMascota)) {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "La mascota '" + nombreMascota + "' ya tiene propietario.\n¿Deseas cambiarlo?",
+                        "Mascota ya adoptada", JOptionPane.YES_NO_OPTION);
+                if (confirm != JOptionPane.YES_OPTION) {
                     return;
                 }
             }
 
-            // Solicitar el ID del propietario
-            String idPropietarioStr = JOptionPane.showInputDialog(this,
-                    "Ingrese el ID del propietario para la mascota '" + nombreMascota + "':",
-                    "Asignar Propietario",
-                    JOptionPane.QUESTION_MESSAGE);
+            String idPropStr = JOptionPane.showInputDialog(this,
+                    "Ingrese el ID del nuevo propietario para '" + nombreMascota + "':",
+                    "Asignar propietario", JOptionPane.QUESTION_MESSAGE);
 
-            // Verificar si el usuario canceló
-            if (idPropietarioStr == null) {
+            if (idPropStr == null || idPropStr.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "El ID no puede estar vacío.",
+                        "Error de validación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // Valida que no esté vacío
-            if (idPropietarioStr.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "El ID del propietario no puede estar vacío.",
-                        "Error de validación",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Valida que sea un número
             int idPropietario;
             try {
-                idPropietario = Integer.parseInt(idPropietarioStr.trim());
-
+                idPropietario = Integer.parseInt(idPropStr.trim());
                 if (idPropietario <= 0) {
-                    JOptionPane.showMessageDialog(this,
-                            "El ID del propietario debe ser un número positivo.",
-                            "Error de validación",
-                            JOptionPane.WARNING_MESSAGE);
-                    return;
+                    throw new NumberFormatException();
                 }
-
-            } catch (NumberFormatException ex) {
+            } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this,
-                        "El ID del propietario debe ser un número válido.",
-                        "Error de formato",
-                        JOptionPane.ERROR_MESSAGE);
+                        "El ID debe ser un número positivo.",
+                        "Formato inválido", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Intentar asignar el propietario
-            boolean asignado = controladorMascota.asignarPropietarioAMascota(idMascotaSeleccionada, idPropietario);
+            // Validar existencia
+            MascotaDTO mascota = controladorMascota.buscarMascota(idMascota);
+            controladorMascota.validarYObtenerPropietario(idPropietario);  // Si no existe, lanza excepción
 
-            if (asignado) {
-                JOptionPane.showMessageDialog(this,
-                        "Propietario asignado correctamente a la mascota '" + nombreMascota + "'.",
-                        "Éxito",
-                        JOptionPane.INFORMATION_MESSAGE);
+            // Asignar y actualizar
+            mascota.setIdPropietario(idPropietario);
+            controladorMascota.actualizarMascota(mascota);
 
-                // Actualiza la tabla
-                cargarTablaMascotas();
-
-                if (filaSeleccionada < tablaMascota.getRowCount()) {
-                    tablaMascota.setRowSelectionInterval(filaSeleccionada, filaSeleccionada);
-                }
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "No se pudo asignar el propietario. Intente nuevamente.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-
-        } catch (MascotaNoEncontradaExcepcion ex) {
             JOptionPane.showMessageDialog(this,
-                    "Error: " + ex.getMessage(),
-                    "Mascota no encontrada",
-                    JOptionPane.ERROR_MESSAGE);
+                    "La mascota '" + nombreMascota + "' fue asignada al propietario con ID: " + idPropietario,
+                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-        } catch (PropietarioNoEncontradoExcepcion ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Error: " + ex.getMessage(),
-                    "Propietario no encontrado",
-                    JOptionPane.ERROR_MESSAGE);
+            cargarTablaMascotas();
+            tablaMascota.setRowSelectionInterval(fila, fila);
 
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Error de validación: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.WARNING_MESSAGE);
-
+        } catch (MascotaNoEncontradaExcepcion | PropietarioNoEncontradoExcepcion ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Error inesperado: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error inesperado: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnAsignarAPropietarioMascotaActionPerformed
+
+    private void btnEliminarCitaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarCitaActionPerformed
+        int filaSeleccionada = tablaCita.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(null, "Selecciona una cita primero.");
+            return;
+        }
+
+        int idCita = (int) tablaCita.getValueAt(filaSeleccionada, 0);
+
+        try {
+            boolean eliminada = controladorCita.eliminarCitaPendiente(idCita);
+            if (eliminada) {
+                System.out.println("Cita eliminada correctamente desde controlador.");
+                JOptionPane.showMessageDialog(null, "Cita eliminada correctamente.");
+                listaCita();
+            } else {
+                System.out.println("No se pudo eliminar la cita. Puede que ya esté atendida.");
+                JOptionPane.showMessageDialog(null, "No se pudo eliminar la cita. Ya fue atendida.");
+            }
+        } catch (CitaNoEncontradaExcepcion | CitaYaAtendidaExcepcion ex) {
+            System.out.println("Excepción: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
+    }//GEN-LAST:event_btnEliminarCitaActionPerformed
+
+    private void btnHistorialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHistorialActionPerformed
+        int fila = tablaMascota.getSelectedRow();
+
+        if (fila >= 0) {
+            try {
+                int idMascota = Integer.parseInt(tablaMascota.getValueAt(fila, 0).toString());
+
+                String historial = controladorMascota.obtenerHistorialClinico(idMascota);
+                String htmlHistorial = "<html><body style='text-align:center; font-family:monospace; font-size:12px; color:white;'>"
+                        + historial.replace("\n", "<br>")
+                        + "</body></html>";
+
+                JEditorPane editorPane = new JEditorPane("text/html", htmlHistorial);
+                editorPane.setEditable(false);
+                editorPane.setOpaque(true);
+
+                editorPane.setBackground(new Color(0, 53, 84));
+                editorPane.setForeground(new Color(30, 30, 30));
+
+                JScrollPane scrollPane = new JScrollPane(editorPane);
+                scrollPane.setPreferredSize(new Dimension(700, 500));
+                scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+                String nombreMascota = tablaMascota.getValueAt(fila, 1).toString();
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        scrollPane,
+                        "Historial Clínico de " + nombreMascota,
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+            } catch (MascotaNoEncontradaExcepcion e) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Error: " + e.getMessage(),
+                        "Mascota no encontrada",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Error al obtener el ID de la mascota",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Error inesperado: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                e.printStackTrace();
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "pro favor selecciona una mascota de la tabla");
+        }
+    }//GEN-LAST:event_btnHistorialActionPerformed
 
     private void cargarTablaMascotas() {
         tablaMascota.setModel(controladorMascota.listarMascotasTabla());
@@ -1732,6 +1812,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         txtDocVet.setText("");
         txtNombreVet.setText("");
         txtEspecialidadVet.setText("");
+        txtTelefonoVet.setText("");
+        txtCorreoVet.setText(null);
         checkDisponible.setSelected(false);
     }
 
@@ -1755,6 +1837,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton btnBuscarMascota;
     private javax.swing.JButton btnBuscarPropietario;
     private javax.swing.JButton btnBuscarVeterinario;
+    private javax.swing.JButton btnEliminarCita;
     private javax.swing.JButton btnEliminarMascota;
     private javax.swing.JButton btnEliminarPropietario;
     private javax.swing.JButton btnEliminarVeterinario;

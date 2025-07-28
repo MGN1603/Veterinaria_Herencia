@@ -1,34 +1,34 @@
 package DAOs;
 
 import DTOs.CitaDTO;
-import Persistencia.SerializadoraCita;
+import Persistencia.GestorPersistencia;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class DaoCita {
 
-    private final ArrayList<CitaDTO> citas;
-    private final SerializadoraCita serializadoraCita;
-
-    public DaoCita() {
-        this.serializadoraCita = new SerializadoraCita();
-        this.citas = serializadoraCita.getListaCita();
-    }
+    private final String RUTA = "datos/citas.dat";
+    private final GestorPersistencia gestor = GestorPersistencia.getInstance();
 
     public ArrayList<CitaDTO> getCitas() {
-        return citas;
+        List<CitaDTO> lista = gestor.cargarLista(RUTA);
+        return lista != null ? new ArrayList<>(lista) : new ArrayList<>();
     }
 
     public boolean agregarCitaMascota(CitaDTO cita) {
-        if (cita != null && buscarCitaPorId(cita.getIdCita()) == null) {
-            citas.add(cita);
-            serializadoraCita.escribirCita();
-            return true;
+        if (cita == null || buscarCitaPorId(cita.getIdCita()) != null) {
+            return false;
         }
-        return false;
+
+        ArrayList<CitaDTO> lista = getCitas();
+        lista.add(cita);
+        gestor.guardarLista(RUTA, lista);
+        return true;
     }
 
     public CitaDTO buscarCitaPorId(int idCita) {
-        for (CitaDTO cita : citas) {
+        for (CitaDTO cita : getCitas()) {
             if (cita.getIdCita() == idCita) {
                 return cita;
             }
@@ -38,7 +38,7 @@ public class DaoCita {
 
     public ArrayList<CitaDTO> obtenerCitasPorMascota(int idMascota) {
         ArrayList<CitaDTO> resultado = new ArrayList<>();
-        for (CitaDTO cita : citas) {
+        for (CitaDTO cita : getCitas()) {
             if (cita.getIdMascota() == idMascota) {
                 resultado.add(cita);
             }
@@ -47,12 +47,14 @@ public class DaoCita {
     }
 
     public boolean actualizarConsulta(int idCita, int idConsulta) {
-        CitaDTO cita = buscarCitaPorId(idCita);
-        if (cita != null) {
-            cita.setIdConsulta(idConsulta);
-            cita.setAtendida(true);
-            serializadoraCita.escribirCita();
-            return true;
+        ArrayList<CitaDTO> lista = getCitas();
+        for (CitaDTO cita : lista) {
+            if (cita.getIdCita() == idCita) {
+                cita.setIdConsulta(idConsulta);
+                cita.setAtendida(true);
+                gestor.guardarLista(RUTA, lista);
+                return true;
+            }
         }
         return false;
     }
@@ -62,19 +64,31 @@ public class DaoCita {
         return cita != null && cita.getIdConsulta() > 0;
     }
 
-    // NUEVO MÉTODO - obtener citas pendientes (sin consulta)
     public ArrayList<CitaDTO> obtenerCitasPendientes() {
         ArrayList<CitaDTO> resultado = new ArrayList<>();
-        for (CitaDTO cita : citas) {
+        for (CitaDTO cita : getCitas()) {
             if (!cita.isAtendida() && cita.getIdConsulta() == 0) {
                 resultado.add(cita);
             }
         }
         return resultado;
     }
+    
+    public boolean eliminarCitaPorMascota(int idMascota) {
+        ArrayList<CitaDTO> lista = getCitas();
+        boolean eliminada = lista.removeIf(cita -> cita.getIdMascota() == idMascota);
+        if (eliminada) {
+            gestor.guardarLista(RUTA, lista);
+        }
+        return eliminada;
+    }
 
-    public void eliminarCitasPorMascota(int idMascota) {
-        citas.removeIf(cita -> cita.getIdMascota() == idMascota);
-        serializadoraCita.escribirCita();
+    public boolean eliminarCitaPorId(int idCita) {
+        ArrayList<CitaDTO> lista = getCitas();
+        boolean eliminada = lista.removeIf(cita -> cita.getIdCita() == idCita);
+        if (eliminada) {
+            gestor.guardarLista(RUTA, lista);
+        }
+        return eliminada;
     }
 }
